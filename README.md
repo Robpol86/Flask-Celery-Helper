@@ -36,10 +36,11 @@ pip install Flask-Celery-Helper
 
 Example:
 ```python
+# example.py
 from flask import Flask
 from flask.ext.celery import Celery
 
-app = Flask(__name__)
+app = Flask('example')
 app.config['REDIS_URL'] = 'redis://localhost'
 celery = Celery(app)
 
@@ -47,8 +48,15 @@ celery = Celery(app)
 def add_together(a, b):
     return a + b
 
-result = add_together.delay(23, 42)
-print(result.wait())
+if __name__ == '__main__':
+    result = add_together.delay(23, 42)
+    print(result.get())
+```
+
+Run these two commands in separate terminals:
+```bash
+celery -A example.celery worker
+python example.py
 ```
 
 Factory Example
@@ -117,5 +125,5 @@ if isinstance(results2, Exception) and str(results2) == 'Failed to acquire lock.
     print('Another instance is already running.')
 else:
     print(results2)
-print(result1.wait())
+print(result1.get())
 ```
