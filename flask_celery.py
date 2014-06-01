@@ -6,7 +6,7 @@ https://pypi.python.org/pypi/Flask-Celery-Helper
 from functools import wraps
 from logging import getLogger
 
-from celery import _state, Celery
+from celery import _state, Celery as CeleryClass
 from flask import current_app
 
 
@@ -14,19 +14,19 @@ __author__ = '@Robpol86'
 __license__ = 'MIT'
 __version__ = '0.1.0'
 
-CELERY_LOCK = '_celery_helper.single_instance.{}'
+CELERY_LOCK = '_celery.single_instance.{}'
 
 
 class _CeleryState(object):
     """Remembers the configuration for the (celery, app) tuple. Modeled from SQLAlchemy."""
 
-    def __init__(self, celery_instance, app):
-        self.celery = celery_instance
+    def __init__(self, celery, app):
+        self.celery = celery
         self.app = app
 
 
 # noinspection PyProtectedMember
-class CeleryHelper(Celery):
+class Celery(CeleryClass):
     """Celery extension for Flask applications.
 
     Involves a hack to allow views and tests importing the celery instance from extensions.py to access the regular
@@ -53,7 +53,7 @@ class CeleryHelper(Celery):
         """
         self.original_register_app = _state._register_app  # Backup Celery app registration function.
         _state._register_app = lambda _: None  # Upon Celery app registration attempt, do nothing.
-        super(CeleryHelper, self).__init__()
+        super(Celery, self).__init__()
         if app is not None:
             self.init_app(app)
 
@@ -69,7 +69,7 @@ class CeleryHelper(Celery):
         app.extensions['celery'] = _CeleryState(self, app)
 
         # Instantiate celery and read config.
-        super(CeleryHelper, self).__init__(app.import_name, broker=app.config['REDIS_URL'])
+        super(Celery, self).__init__(app.import_name, broker=app.config['REDIS_URL'])
         self._preconf['CELERY_RESULT_BACKEND'] = app.config['REDIS_URL']  # Set result backend default.
         self.conf.update(app.config)
         task_base = self.Task

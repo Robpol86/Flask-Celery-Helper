@@ -1,5 +1,6 @@
 """pytest configuration for all tests in all directories."""
-from flask import Flask
+from flask import current_app, Flask
+from flask.ext.celery import Celery, single_instance
 from flask.ext.redis import Redis
 import pytest
 
@@ -13,7 +14,20 @@ def app_context(request):
     app.config['CELERY_ALWAYS_EAGER'] = True
     app.config['TESTING'] = True
     app.config['REDIS_URL'] = 'redis://localhost/1'
+    Celery(app)
     Redis(app)
     context = app.app_context()
     context.push()
     request.addfinalizer(lambda: context.pop())
+
+
+@pytest.fixture(scope='session')
+def add_task():
+    celery = current_app.extensions['celery'].celery
+
+    @celery.task(bind=True)
+    @single_instance
+    def add(x, y):
+      return x + y
+
+    return add
