@@ -103,27 +103,32 @@ Single Instance Example
 -----------------------
 
 ```python
+# example.py
 import time
 from flask import Flask
 from flask.ext.celery import Celery, single_instance
+from flask.ext.redis import Redis
 
-app = Flask(__name__)
+app = Flask('example')
 app.config['REDIS_URL'] = 'redis://localhost'
 celery = Celery(app)
+Redis(app)
 
 @celery.task(bind=True)
 @single_instance
-def sleep_five_seconds(a, b):
-    time.sleep(5)
+def sleep_one_second(a, b):
+    time.sleep(1)
     return a + b
 
-task1 = sleep_five_seconds.delay(23, 42)
-task2 = sleep_five_seconds.delay(20, 40)
-
-results2 = task.get(propagate=False)
-if isinstance(results2, Exception) and str(results2) == 'Failed to acquire lock.':
-    print('Another instance is already running.')
-else:
-    print(results2)
-print(result1.get())
+if __name__ == '__main__':
+    task1 = sleep_one_second.delay(23, 42)
+    time.sleep(0.1)
+    task2 = sleep_one_second.delay(20, 40)
+    results1 = task1.get(propagate=False)
+    results2 = task2.get(propagate=False)
+    print(results1)  # 65
+    if isinstance(results2, Exception) and str(results2) == 'Failed to acquire lock.':
+        print('Another instance is already running.')
+    else:
+        print(results2)  # Should not happen.
 ```
