@@ -1,17 +1,23 @@
+import ast
 import os
 from codecs import open  # To use a consistent encoding
-from setuptools import setup  # Always prefer setuptools over distutils
+import setuptools
+import setuptools.command.sdist
 
-from flask_celery import __author__, __license__, __version__
-
-
+setuptools.command.sdist.READMES = tuple(list(setuptools.command.sdist.READMES) + ['README.md'])
 here = os.path.abspath(os.path.dirname(__file__))
 
-# Get the long description from the relevant file
+# Get the long description and other data from the relevant files
 with open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
+with open(os.path.join(here, 'flask_celery.py')) as f:
+    lines = [l.strip() for l in f if l.startswith('__')]
+metadata = ast.literal_eval("{'" + ", '".join([l.replace(' = ', "': ") for l in lines]) + '}')
+__author__, __license__, __version__ = [metadata[k] for k in ('__author__', '__license__', '__version__')]
+if not all((__author__, __license__, __version__)):
+    raise ValueError('Failed to obtain metadata from module.')
 
-setup(
+setuptools.setup(
     name='Flask-Celery-Helper',
     version=__version__,
 
