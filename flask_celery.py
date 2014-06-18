@@ -4,6 +4,7 @@ https://github.com/Robpol86/Flask-Celery-Helper
 https://pypi.python.org/pypi/Flask-Celery-Helper
 """
 from functools import wraps
+import hashlib
 from logging import getLogger
 
 from celery import _state, Celery as CeleryClass
@@ -12,9 +13,9 @@ from flask import current_app
 
 __author__ = '@Robpol86'
 __license__ = 'MIT'
-__version__ = '0.1.0'
+__version__ = '0.2.0'
 
-CELERY_LOCK = '_celery.single_instance.{}'
+CELERY_LOCK = '_celery.single_instance.{task_name}'
 
 
 class _CeleryState(object):
@@ -65,7 +66,7 @@ class Celery(CeleryClass):
         """
         _state._register_app = self.original_register_app  # Restore Celery app registration function.
         if not hasattr(app, 'extensions'):
-            app.extensions = {}
+            app.extensions = dict()
         app.extensions['celery'] = _CeleryState(self, app)
 
         # Instantiate celery and read config.
@@ -83,7 +84,7 @@ class Celery(CeleryClass):
         setattr(self, 'Task', ContextTask)
 
 
-def single_instance(func, lock_timeout=None):
+def single_instance(func, lock_timeout=None, include_args=False):
     """Celery task decorator. Forces the task to have only one running instance at a time through locks set using Redis.
     Use with binded tasks (@celery.task(bind=True)).
 
@@ -99,32 +100,41 @@ def single_instance(func, lock_timeout=None):
     lock_timeout -- lock timeout in seconds plus five more seconds, in-case the task crashes and fails to release the
         lock. If not specified, the values of the task's soft/hard limits are used. If all else fails, timeout will be 5
         minutes.
+    include_args -- include the md5 checksum of the arguments passed to the task in the Redis key. This allows the same
+        task to run with different arguments, only stopping a task from running if another instance of it is running
+        with the same arguments.
     """
     @wraps(func)
     def wrapped(self, *args, **kwargs):
+        # Gather data.
         log = getLogger('single_instance.wrapped')
         redis = current_app.extensions['redis'].redis
         ret_value, have_lock = None, False
-        redis_key = CELERY_LOCK.format(self.name)
+        module_name, func_name, task_name = func.__module__, func.func_name, self.name
+        if include_args:
+            merged_args = str(args) + str([(k, kwargs[k]) for k in sorted(kwargs)])
+            task_name += '.args.{0}'.format(hashlib.md5(merged_args).hexdigest())
+        redis_key = CELERY_LOCK.format(task_name=task_name)
+        log_prefix = 'single_instance.wrapped({0}.{1})'.format(module_name, func_name)
+        # Gather timeout value.
         time_limit = current_app.config.get('CELERYD_TASK_TIME_LIMIT')
         soft_time_limit = current_app.config.get('CELERYD_TASK_SOFT_TIME_LIMIT')
         timeout_ = lock_timeout or self.soft_time_limit or self.time_limit or soft_time_limit or time_limit or (60 * 5)
+        # Obtain lock.
         lock = redis.lock(redis_key, timeout=(int(timeout_) + 5))
-        log.debug('single_instance.wrapped({}.{}): Timeout {}s | Redis key {}'.format(func.__module__, func.func_name,
-                timeout_, redis_key))
+        log.debug('{0}: Timeout {1}s | Redis key {2}'.format(log_prefix, timeout_, redis_key))
         # Done setting up, now run the function.
         try:
             have_lock = lock.acquire(blocking=False)
             if have_lock:
-                log.debug('single_instance.wrapped({}.{}): Got lock, running.'.format(func.__module__, func.func_name))
+                log.debug('{0}: Got lock, running.'.format(log_prefix))
                 ret_value = func(*args, **kwargs)
             else:
-                log.debug('single_instance.wrapped({}.{}): Another instance is running.'.format(func.__module__,
-                        func.func_name))
+                log.debug('{0}: Another instance is running.'.format(log_prefix))
                 raise RuntimeError('Failed to acquire lock.')
         finally:
             if have_lock:
-                log.debug('single_instance.wrapped({}.{}): Releasing lock.'.format(func.__module__, func.func_name))
+                log.debug('{0}: Releasing lock.'.format(log_prefix))
                 lock.release()
         return ret_value
     return wrapped

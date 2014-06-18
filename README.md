@@ -1,5 +1,4 @@
-Flask-Celery-Helper
-===================
+# Flask-Celery-Helper
 
 Even though the [Flask documentation](http://flask.pocoo.org/docs/patterns/celery/) says Celery extensions are
 unnecessary now, I found that I still need an extension to properly use Celery in large Flask applications. Specifically
@@ -9,14 +8,12 @@ This extension also comes with a `single_instance` method using Redis locks.
 
 *Currently only works with Redis backends.*
 
-Attribution
------------
+## Attribution
 
 Single instance decorator inspired by
 [Ryan Roemer](http://loose-bits.com/2010/10/distributed-task-locking-in-celery.html).
 
-Supported Platforms
--------------------
+## Supported Platforms
 
 * OSX and Linux.
 * Python 2.7
@@ -26,8 +23,7 @@ Supported Platforms
 
 Probably works on other versions too.
 
-Quickstart
-----------
+## Quickstart
 
 Install:
 ```bash
@@ -59,8 +55,7 @@ celery -A example.celery worker
 python example.py
 ```
 
-Factory Example
----------------
+## Factory Example
 
 ```python
 # extensions.py
@@ -99,8 +94,7 @@ app = create_app()
 app.run()
 ```
 
-Single Instance Example
------------------------
+## Single Instance Example
 
 ```python
 # example.py
@@ -132,3 +126,13 @@ if __name__ == '__main__':
     else:
         print(results2)  # Should not happen.
 ```
+
+## Changelog
+
+#### 0.2.0
+
+* Added include_args argument to single_instance.
+
+#### 0.1.0
+
+* Initial release.

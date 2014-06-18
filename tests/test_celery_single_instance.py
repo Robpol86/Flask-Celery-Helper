@@ -15,7 +15,7 @@ def test_instance(add_task):
   """Test for exception to be raised."""
   # Prepare.
   redis = current_app.extensions['redis'].redis
-  redis_key = CELERY_LOCK.format('tests.conftest.add')
+  redis_key = CELERY_LOCK.format(task_name='tests.conftest.add')
   lock = redis.lock(redis_key, timeout=1)
   have_lock = lock.acquire(blocking=False)
   assert True == bool(have_lock)
