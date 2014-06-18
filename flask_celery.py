@@ -3,7 +3,7 @@
 https://github.com/Robpol86/Flask-Celery-Helper
 https://pypi.python.org/pypi/Flask-Celery-Helper
 """
-from functools import wraps
+from functools import partial, wraps
 import hashlib
 from logging import getLogger
 
@@ -13,7 +13,7 @@ from flask import current_app
 
 __author__ = '@Robpol86'
 __license__ = 'MIT'
-__version__ = '0.2.0'
+__version__ = '0.2.1'
 
 CELERY_LOCK = '_celery.single_instance.{task_name}'
 
@@ -84,12 +84,13 @@ class Celery(CeleryClass):
         setattr(self, 'Task', ContextTask)
 
 
-def single_instance(func, lock_timeout=None, include_args=False):
+def single_instance(func=None, lock_timeout=None, include_args=False):
     """Celery task decorator. Forces the task to have only one running instance at a time through locks set using Redis.
     Use with binded tasks (@celery.task(bind=True)).
 
     Modeled after:
     http://loose-bits.com/2010/10/distributed-task-locking-in-celery.html
+    http://blogs.it.ox.ac.uk/inapickle/2012/01/05/python-decorators-with-optional-arguments/
 
     Written by @Robpol86.
 
@@ -104,13 +105,16 @@ def single_instance(func, lock_timeout=None, include_args=False):
         task to run with different arguments, only stopping a task from running if another instance of it is running
         with the same arguments.
     """
+    if func is None:
+        return partial(single_instance, lock_timeout=lock_timeout, include_args=include_args)
+
     @wraps(func)
-    def wrapped(self, *args, **kwargs):
+    def wrapped(celery_self, *args, **kwargs):
         # Gather data.
         log = getLogger('single_instance.wrapped')
         redis = current_app.extensions['redis'].redis
         ret_value, have_lock = None, False
-        module_name, func_name, task_name = func.__module__, func.func_name, self.name
+        module_name, func_name, task_name = func.__module__, func.func_name, celery_self.name
         if include_args:
             merged_args = str(args) + str([(k, kwargs[k]) for k in sorted(kwargs)])
             task_name += '.args.{0}'.format(hashlib.md5(merged_args).hexdigest())
@@ -119,7 +123,9 @@ def single_instance(func, lock_timeout=None, include_args=False):
         # Gather timeout value.
         time_limit = current_app.config.get('CELERYD_TASK_TIME_LIMIT')
         soft_time_limit = current_app.config.get('CELERYD_TASK_SOFT_TIME_LIMIT')
-        timeout_ = lock_timeout or self.soft_time_limit or self.time_limit or soft_time_limit or time_limit or (60 * 5)
+        last_resort = (60 * 5)
+        timeout_ = lock_timeout or celery_self.soft_time_limit or celery_self.time_limit
+        timeout_ = timeout_ or soft_time_limit or time_limit or last_resort
         # Obtain lock.
         lock = redis.lock(redis_key, timeout=(int(timeout_) + 5))
         log.debug('{0}: Timeout {1}s | Redis key {2}'.format(log_prefix, timeout_, redis_key))

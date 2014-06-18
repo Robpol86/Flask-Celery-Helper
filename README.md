@@ -129,6 +129,10 @@ if __name__ == '__main__':
 
 ## Changelog
 
+#### 0.2.1
+
+* Fixed single_instance arguments with functools.
+
 #### 0.2.0
 
 * Added include_args argument to single_instance.

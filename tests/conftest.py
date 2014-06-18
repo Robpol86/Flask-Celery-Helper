@@ -31,3 +31,15 @@ def add_task():
       return x + y
 
     return add
+
+
+@pytest.fixture(scope='session')
+def mul_task():
+    celery = current_app.extensions['celery'].celery
+
+    @celery.task(bind=True)
+    @single_instance(include_args=True)
+    def mul(x, y):
+      return x * y
+
+    return mul

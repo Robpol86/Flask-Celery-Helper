@@ -24,3 +24,20 @@ def test_instance(add_task):
     add_task.apply(args=(4, 4)).get()
   assert 'Failed to acquire lock.' == e.value.message
   lock.release()
+
+
+def test_instance_include_args(mul_task):
+  """Same as test_instance() but with single_instance(include_args=True)."""
+  # Prepare.
+  redis = current_app.extensions['redis'].redis
+  redis_key = CELERY_LOCK.format(task_name='tests.conftest.mul.args.3d6442056c1bdf824b13ee277b62050c')
+  lock = redis.lock(redis_key, timeout=1)
+  have_lock = lock.acquire(blocking=False)
+  assert True == bool(have_lock)
+  # Test with different args.
+  assert 12 == mul_task.apply(args=(4, 3)).get()
+  # Test with matching.
+  with pytest.raises(RuntimeError) as e:
+    mul_task.apply(args=(4, 4)).get()
+  assert 'Failed to acquire lock.' == e.value.message
+  lock.release()
