@@ -4,7 +4,8 @@ from codecs import open  # To use a consistent encoding
 import setuptools
 import setuptools.command.sdist
 
-setuptools.command.sdist.READMES = tuple(list(setuptools.command.sdist.READMES) + ['README.md'])
+_old_readmes = getattr(setuptools.command.sdist, 'READMES', ())
+setuptools.command.sdist.READMES = tuple(list(_old_readmes) + ['README.md'])
 here = os.path.abspath(os.path.dirname(__file__))
 
 # Get the long description and other data from the relevant files
