@@ -116,7 +116,7 @@ def single_instance(func=None, lock_timeout=None, include_args=False):
         log = getLogger('single_instance.wrapped')
         redis = current_app.extensions['redis'].redis
         ret_value, have_lock = None, False
-        module_name, func_name, task_name = func.__module__, func.func_name, celery_self.name
+        module_name, func_name, task_name = func.__module__, func.__name__, celery_self.name
         if include_args:
             merged_args = str(args) + str([(k, kwargs[k]) for k in sorted(kwargs)])
             task_name += '.args.{0}'.format(hashlib.md5(merged_args).hexdigest())
