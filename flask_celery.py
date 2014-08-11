@@ -66,6 +66,8 @@ class Celery(CeleryClass):
         _state._register_app = self.original_register_app  # Restore Celery app registration function.
         if not hasattr(app, 'extensions'):
             app.extensions = dict()
+        if 'celery' in app.extensions:
+            raise ValueError('Already registered extension CELERY.')
         app.extensions['celery'] = _CeleryState(self, app)
 
         # Instantiate celery and read config.
