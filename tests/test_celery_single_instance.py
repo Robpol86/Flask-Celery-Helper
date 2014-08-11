@@ -23,7 +23,7 @@ def test_instance(add_task):
     # Test.
     with pytest.raises(RuntimeError) as e:
         add_task.apply(args=(4, 4)).get()
-    assert 'Failed to acquire lock.' == e.value.message
+    assert 'Failed to acquire lock.' == str(e.value)
     lock.release()
 
 
@@ -40,5 +40,5 @@ def test_instance_include_args(mul_task):
     # Test with matching.
     with pytest.raises(RuntimeError) as e:
         mul_task.apply(args=(4, 4)).get()
-    assert 'Failed to acquire lock.' == e.value.message
+    assert 'Failed to acquire lock.' == str(e.value)
     lock.release()
