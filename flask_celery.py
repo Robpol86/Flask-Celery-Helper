@@ -119,7 +119,7 @@ def single_instance(func=None, lock_timeout=None, include_args=False):
         module_name, func_name, task_name = func.__module__, func.__name__, celery_self.name
         if include_args:
             merged_args = str(args) + str([(k, kwargs[k]) for k in sorted(kwargs)])
-            task_name += '.args.{0}'.format(hashlib.md5(merged_args).hexdigest())
+            task_name += '.args.{0}'.format(hashlib.md5(merged_args.encode('utf-8')).hexdigest())
         redis_key = CELERY_LOCK.format(task_name=task_name)
         log_prefix = 'single_instance.wrapped({0}.{1})'.format(module_name, func_name)
         # Gather timeout value.
