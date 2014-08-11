@@ -3,6 +3,7 @@
 https://github.com/Robpol86/Flask-Celery-Helper
 https://pypi.python.org/pypi/Flask-Celery-Helper
 """
+
 from functools import partial, wraps
 import hashlib
 from logging import getLogger
@@ -10,11 +11,9 @@ from logging import getLogger
 from celery import _state, Celery as CeleryClass
 from flask import current_app
 
-
 __author__ = '@Robpol86'
 __license__ = 'MIT'
-__version__ = '0.2.1'
-
+__version__ = '0.2.2'
 CELERY_LOCK = '_celery.single_instance.{task_name}'
 
 
@@ -67,6 +66,8 @@ class Celery(CeleryClass):
         _state._register_app = self.original_register_app  # Restore Celery app registration function.
         if not hasattr(app, 'extensions'):
             app.extensions = dict()
+        if 'celery' in app.extensions:
+            raise ValueError('Already registered extension CELERY.')
         app.extensions['celery'] = _CeleryState(self, app)
 
         # Instantiate celery and read config.
@@ -85,7 +86,8 @@ class Celery(CeleryClass):
 
 
 def single_instance(func=None, lock_timeout=None, include_args=False):
-    """Celery task decorator. Forces the task to have only one running instance at a time through locks set using Redis.
+    """Celery task decorator. Forces the task to have only one running instance at a time.
+
     Use with binded tasks (@celery.task(bind=True)).
 
     Modeled after:
@@ -114,10 +116,10 @@ def single_instance(func=None, lock_timeout=None, include_args=False):
         log = getLogger('single_instance.wrapped')
         redis = current_app.extensions['redis'].redis
         ret_value, have_lock = None, False
-        module_name, func_name, task_name = func.__module__, func.func_name, celery_self.name
+        module_name, func_name, task_name = func.__module__, func.__name__, celery_self.name
         if include_args:
             merged_args = str(args) + str([(k, kwargs[k]) for k in sorted(kwargs)])
-            task_name += '.args.{0}'.format(hashlib.md5(merged_args).hexdigest())
+            task_name += '.args.{0}'.format(hashlib.md5(merged_args.encode('utf-8')).hexdigest())
         redis_key = CELERY_LOCK.format(task_name=task_name)
         log_prefix = 'single_instance.wrapped({0}.{1})'.format(module_name, func_name)
         # Gather timeout value.
