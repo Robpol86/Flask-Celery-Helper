@@ -3,6 +3,7 @@
 https://github.com/Robpol86/Flask-Celery-Helper
 https://pypi.python.org/pypi/Flask-Celery-Helper
 """
+
 from functools import partial, wraps
 import hashlib
 from logging import getLogger
@@ -10,11 +11,9 @@ from logging import getLogger
 from celery import _state, Celery as CeleryClass
 from flask import current_app
 
-
 __author__ = '@Robpol86'
 __license__ = 'MIT'
 __version__ = '0.2.1'
-
 CELERY_LOCK = '_celery.single_instance.{task_name}'
 
 
@@ -85,7 +84,8 @@ class Celery(CeleryClass):
 
 
 def single_instance(func=None, lock_timeout=None, include_args=False):
-    """Celery task decorator. Forces the task to have only one running instance at a time through locks set using Redis.
+    """Celery task decorator. Forces the task to have only one running instance at a time.
+
     Use with binded tasks (@celery.task(bind=True)).
 
     Modeled after:
