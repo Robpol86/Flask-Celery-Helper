@@ -8,6 +8,19 @@ This extension also comes with a `single_instance` method using Redis locks.
 
 *Currently only works with Redis backends.*
 
+[![Build Status](https://travis-ci.org/Robpol86/Flask-Celery-Helper.svg?branch=master)]
+(https://travis-ci.org/Robpol86/Flask-Celery-Helper)
+[![Coverage Status](https://img.shields.io/coveralls/Robpol86/Flask-Celery-Helper.svg)]
+(https://coveralls.io/r/Robpol86/Flask-Celery-Helper)
+[![Latest Version](https://pypip.in/version/Flask-Celery-Helper/badge.png)]
+(https://pypi.python.org/pypi/Flask-Celery-Helper/)
+[![Downloads](https://pypip.in/download/Flask-Celery-Helper/badge.png)]
+(https://pypi.python.org/pypi/Flask-Celery-Helper/)
+[![Download format](https://pypip.in/format/Flask-Celery-Helper/badge.png)]
+(https://pypi.python.org/pypi/Flask-Celery-Helper/)
+[![License](https://pypip.in/license/Flask-Celery-Helper/badge.png)]
+(https://pypi.python.org/pypi/Flask-Celery-Helper/)
+
 ## Attribution
 
 Single instance decorator inspired by
@@ -16,12 +29,10 @@ Single instance decorator inspired by
 ## Supported Platforms
 
 * OSX and Linux.
-* Python 2.7
+* Python 2.6, 2.7, 3.3, 3.4
 * [Flask](http://flask.pocoo.org/) 0.10.1
 * [Redis](http://redis.io/) 2.9.1
 * [Celery](http://www.celeryproject.org/) 3.1.11
-
-Probably works on other versions too.
 
 ## Quickstart
 
@@ -128,6 +139,10 @@ if __name__ == '__main__':
 ```
 
 ## Changelog
+
+#### 0.2.2
+
+* Added Python 2.6 and 3.x support.
 
 #### 0.2.1
 

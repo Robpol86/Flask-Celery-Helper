@@ -13,7 +13,7 @@ from flask import current_app
 
 __author__ = '@Robpol86'
 __license__ = 'MIT'
-__version__ = '0.2.1'
+__version__ = '0.2.2'
 CELERY_LOCK = '_celery.single_instance.{task_name}'
 
 
