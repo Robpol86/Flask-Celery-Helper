@@ -6,8 +6,6 @@ I need an init_app() method to initialize Celery after I instantiate it.
 
 This extension also comes with a `single_instance` method using Redis locks.
 
-*Currently only works with Redis backends.*
-
 [![Build Status](https://travis-ci.org/Robpol86/Flask-Celery-Helper.svg?branch=master)]
 (https://travis-ci.org/Robpol86/Flask-Celery-Helper)
 [![Coverage Status](https://img.shields.io/coveralls/Robpol86/Flask-Celery-Helper.svg)]

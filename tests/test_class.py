@@ -5,7 +5,7 @@ from flask.ext.celery import Celery
 
 
 class FakeApp(object):
-    config = dict(REDIS_URL='redis://localhost')
+    config = dict(CELERY_BROKER_URL='redis://localhost', CELERY_RESULT_BACKEND='redis://localhost')
     static_url_path = ''
     import_name = ''
 
