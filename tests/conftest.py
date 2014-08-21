@@ -16,6 +16,7 @@ def app_context(request):
     app = Flask(__name__)
     app.config['CELERY_ALWAYS_EAGER'] = True
     app.config['TESTING'] = True
+    app.config['REDIS_URL'] = 'redis://localhost/1'
     app.config['CELERY_BROKER_URL'] = 'redis://localhost/1'
     app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost/1'
     Celery(app)
