@@ -6,8 +6,6 @@ I need an init_app() method to initialize Celery after I instantiate it.
 
 This extension also comes with a `single_instance` method using Redis locks.
 
-*Currently only works with Redis backends.*
-
 [![Build Status](https://travis-ci.org/Robpol86/Flask-Celery-Helper.svg?branch=master)]
 (https://travis-ci.org/Robpol86/Flask-Celery-Helper)
 [![Coverage Status](https://img.shields.io/coveralls/Robpol86/Flask-Celery-Helper.svg)]
@@ -48,7 +46,8 @@ from flask import Flask
 from flask.ext.celery import Celery
 
 app = Flask('example')
-app.config['REDIS_URL'] = 'redis://localhost'
+app.config['CELERY_BROKER_URL'] = 'redis://localhost'
+app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost'
 celery = Celery(app)
 
 @celery.task()
@@ -83,7 +82,8 @@ from extensions import celery
 def create_app():
     app = Flask(__name__)
     app.config['CELERY_IMPORTS'] = ('tasks.add_together', )
-    app.config['REDIS_URL'] = 'redis://localhost'
+    app.config['CELERY_BROKER_URL'] = 'redis://localhost'
+    app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost'
     celery.init_app(app)
     return app
 ```
@@ -116,6 +116,8 @@ from flask.ext.redis import Redis
 
 app = Flask('example')
 app.config['REDIS_URL'] = 'redis://localhost'
+app.config['CELERY_BROKER_URL'] = 'redis://localhost'
+app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost'
 celery = Celery(app)
 Redis(app)
 

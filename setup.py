@@ -131,9 +131,9 @@ setuptools.setup(
     # project is installed. For an analysis of "install_requires" vs pip's
     # requirements files see:
     # https://packaging.python.org/en/latest/technical.html#install-requires-vs-requirements-files
-    install_requires=['Flask', 'redis', 'celery'],
+    install_requires=['Flask', 'celery'],
 
-    tests_require=['pytest', 'pytest-cov', 'Flask-Redis-Helper'],
+    tests_require=['pytest', 'pytest-cov', 'redis', 'Flask-Redis-Helper'],
     cmdclass=dict(test=PyTest, testpdb=PyTestPdb, testcovweb=PyTestCovWeb, style=CmdFlake, lint=CmdLint),
 
     # Pass the rest from get_metadata().

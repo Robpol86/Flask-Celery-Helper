@@ -71,8 +71,10 @@ class Celery(CeleryClass):
         app.extensions['celery'] = _CeleryState(self, app)
 
         # Instantiate celery and read config.
-        super(Celery, self).__init__(app.import_name, broker=app.config['REDIS_URL'])
-        self._preconf['CELERY_RESULT_BACKEND'] = app.config['REDIS_URL']  # Set result backend default.
+        super(Celery, self).__init__(app.import_name,
+                                     broker=app.config['CELERY_BROKER_URL'])
+        # Set result backend default.
+        self._preconf['CELERY_RESULT_BACKEND'] = app.config['CELERY_RESULT_BACKEND']
         self.conf.update(app.config)
         task_base = self.Task
 
