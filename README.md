@@ -142,6 +142,10 @@ if __name__ == '__main__':
 
 ## Changelog
 
+#### 1.0.0
+
+* Just a version number change.
+
 #### 0.2.2
 
 * Added Python 2.6 and 3.x support.
