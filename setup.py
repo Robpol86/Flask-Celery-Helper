@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import ast
 import atexit
 from codecs import open
@@ -12,6 +14,9 @@ from setuptools.command.test import test
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 setuptools.command.sdist.READMES = tuple(list(getattr(setuptools.command.sdist, 'READMES', ())) + ['README.md'])
+NAME = 'Flask-Celery-Helper'
+NAME_FILE = 'flask_celery'
+PACKAGE = False
 
 
 def get_metadata(main_file):
@@ -39,7 +44,7 @@ def get_metadata(main_file):
 
 
 class PyTest(test):
-    TEST_ARGS = ['--cov-report', 'term-missing', '--cov', 'flask_celery', 'tests']
+    TEST_ARGS = ['--cov-report', 'term-missing', '--cov', NAME_FILE, 'tests']
 
     def finalize_options(self):
         test.finalize_options(self)
@@ -58,7 +63,7 @@ class PyTestPdb(PyTest):
 
 
 class PyTestCovWeb(PyTest):
-    TEST_ARGS = ['--cov-report', 'html', '--cov', 'flask_celery', 'tests']
+    TEST_ARGS = ['--cov-report', 'html', '--cov', NAME_FILE, 'tests']
 
     def run_tests(self):
         if find_executable('open'):
@@ -66,9 +71,9 @@ class PyTestCovWeb(PyTest):
         PyTest.run_tests(self)
 
 
-class CmdFlake(setuptools.Command):
+class CmdStyle(setuptools.Command):
     user_options = []
-    CMD_ARGS = ['flake8', '--max-line-length', '120', '--statistics', 'flask_celery']
+    CMD_ARGS = ['flake8', '--max-line-length', '120', '--statistics', NAME_FILE + ('' if PACKAGE else '.py')]
 
     def initialize_options(self):
         pass
@@ -80,62 +85,42 @@ class CmdFlake(setuptools.Command):
         subprocess.call(self.CMD_ARGS)
 
 
-class CmdLint(CmdFlake):
-    CMD_ARGS = ['pylint', '--max-line-length', '120', 'flask_celery']
+class CmdLint(CmdStyle):
+    CMD_ARGS = ['pylint', '--max-line-length', '120', NAME_FILE + ('' if PACKAGE else '.py')]
 
 
-# Setup definition.
-setuptools.setup(
-    name='Flask-Celery-Helper',
+ALL_DATA = dict(
+    name=NAME,
     description='Celery support for Flask without breaking PyCharm inspections.',
-
-    # The project's main homepage.
-    url='https://github.com/Robpol86/Flask-Celery-Helper',
-
-    # Author details
+    url='https://github.com/Robpol86/{0}'.format(NAME),
     author_email='robpol86@gmail.com',
 
-    # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
-        # How mature is this project? Common values are
-        #   3 - Alpha
-        #   4 - Beta
-        #   5 - Production/Stable
-        'Development Status :: 3 - Alpha',
-
-        # Indicate who your project is intended for
+        'Development Status :: 5 - Production/Stable',
         'Environment :: Web Environment',
         'Framework :: Flask',
         'Intended Audience :: Developers',
-        'Topic :: Software Development :: Build Tools',
-
-        # Pick your license as you wish (should match "license" above)
         'License :: OSI Approved :: MIT License',
-
-        # Specify the Python versions you support here. In particular, ensure
-        # that you indicate whether you support Python 2, Python 3 or both.
         'Operating System :: POSIX',
         'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
+        'Topic :: Software Development :: Libraries',
     ],
 
-    # What does your project relate to?
     keywords='flask celery redis',
-
-    py_modules=['flask_celery'],
+    py_modules=[NAME_FILE],
     zip_safe=False,
 
-    # List run-time dependencies here.  These will be installed by pip when your
-    # project is installed. For an analysis of "install_requires" vs pip's
-    # requirements files see:
-    # https://packaging.python.org/en/latest/technical.html#install-requires-vs-requirements-files
     install_requires=['Flask', 'celery'],
-
     tests_require=['pytest', 'pytest-cov', 'redis', 'Flask-Redis-Helper'],
-    cmdclass=dict(test=PyTest, testpdb=PyTestPdb, testcovweb=PyTestCovWeb, style=CmdFlake, lint=CmdLint),
+    cmdclass=dict(test=PyTest, testpdb=PyTestPdb, testcovweb=PyTestCovWeb, style=CmdStyle, lint=CmdLint),
 
     # Pass the rest from get_metadata().
-    **get_metadata(os.path.join('flask_celery.py'))
+    **get_metadata(os.path.join(NAME_FILE + ('/__init__.py' if PACKAGE else '.py')))
 )
+
+
+if __name__ == '__main__':
+    setuptools.setup(**ALL_DATA)
