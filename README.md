@@ -144,7 +144,7 @@ if __name__ == '__main__':
 
 #### 1.0.0
 
-* Just a version number change.
+* Support for non-Redis backends.
 
 #### 0.2.2
 
