@@ -74,7 +74,7 @@ class Celery(CeleryClass):
         super(Celery, self).__init__(app.import_name,
                                      broker=app.config['CELERY_BROKER_URL'])
 
-        if "CELERY_RESULT_BACKEND" in app.config:
+        if 'CELERY_RESULT_BACKEND' in app.config:
             # Set result backend default.
             self._preconf['CELERY_RESULT_BACKEND'] = app.config['CELERY_RESULT_BACKEND']
 
