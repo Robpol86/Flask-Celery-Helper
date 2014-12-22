@@ -1,0 +1,45 @@
+environment:
+  CODECOV_TOKEN:
+    secure: 180d26a6-492b-49ef-a0bd-80ec8e2183f7
+  PYTHONIOENCODING: utf-8
+
+  matrix:
+    - PYTHON: C:\Python27
+    - PYTHON: C:\Python27-x64
+    - PYTHON: C:\Python33
+    - PYTHON: C:\Python33-x64
+    - PYTHON: C:\Python34
+    - PYTHON: C:\Python34-x64
+
+init:
+  - IF DEFINED PYTHON set PATH=%PYTHON%;%PYTHON%\Scripts;%PATH%
+
+install:
+  - ps: Start-FileDownload https://raw.github.com/pypa/pip/master/contrib/get-pip.py
+  - python get-pip.py
+  - ps: pip install $(python -c 'import setup; print(setup.REQUIRES_PIP)')
+  - pip install robpol86-codecov
+
+build_script:
+  - ps: mv .git ..
+  - pip install .
+  - ps: mv ..\.git .
+
+after_build:
+  - cinst redis-64
+  - redis-server --service-install
+  - redis-server --service-start --service-name redisService
+
+test_script:
+  #- python setup.py test  # SQLAlchemy SQLite
+  #- BROKER=rabbit python setup.py test
+  - BROKER=redis python setup.py test
+  #- BROKER=redis_sock python setup.py test
+  #- BROKER=mongo python setup.py test
+  #- BROKER=couch python setup.py test
+  #- BROKER=beanstalk python setup.py test
+  #- BROKER=iron python setup.py test
+  #- BROKER=mysql python setup.py test
+  #- BROKER=postgres python setup.py test
+
+after_test: codecov

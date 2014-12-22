@@ -4,19 +4,20 @@ Even though the [Flask documentation](http://flask.pocoo.org/docs/patterns/celer
 unnecessary now, I found that I still need an extension to properly use Celery in large Flask applications. Specifically
 I need an init_app() method to initialize Celery after I instantiate it.
 
-This extension also comes with a `single_instance` method using Redis locks.
+This extension also comes with a `single_instance` method.
 
-[![Build Status](https://travis-ci.org/Robpol86/Flask-Celery-Helper.svg?branch=master)]
+* Python 2.6, 2.7, 3.3, and 3.4 supported on Linux and OS X.
+* Python 2.7, 3.3, and 3.4 supported on Windows (both 32 and 64 bit versions of Python).
+
+[![Build Status Windows](https://img.shields.io/appveyor/ci/Robpol86/Flask-Celery-Helper.svg?style=flat-square)]
+(https://ci.appveyor.com/project/Robpol86/Flask-Celery-Helper)
+[![Build Status](https://img.shields.io/travis/Robpol86/Flask-Celery-Helper/master.svg?style=flat-square)]
 (https://travis-ci.org/Robpol86/Flask-Celery-Helper)
-[![Coverage Status](https://img.shields.io/coveralls/Robpol86/Flask-Celery-Helper.svg)]
-(https://coveralls.io/r/Robpol86/Flask-Celery-Helper)
-[![Latest Version](https://pypip.in/version/Flask-Celery-Helper/badge.png)]
+[![Coverage Status](https://img.shields.io/codecov/c/github/Robpol86/Flask-Celery-Helper/master.svg?style=flat-square)]
+(https://codecov.io/github/Robpol86/Flask-Celery-Helper)
+[![Latest Version](https://img.shields.io/pypi/v/Flask-Celery-Helper.svg?style=flat-square)]
 (https://pypi.python.org/pypi/Flask-Celery-Helper/)
-[![Downloads](https://pypip.in/download/Flask-Celery-Helper/badge.png)]
-(https://pypi.python.org/pypi/Flask-Celery-Helper/)
-[![Download format](https://pypip.in/format/Flask-Celery-Helper/badge.png)]
-(https://pypi.python.org/pypi/Flask-Celery-Helper/)
-[![License](https://pypip.in/license/Flask-Celery-Helper/badge.png)]
+[![Downloads](https://img.shields.io/pypi/dm/Flask-Celery-Helper.svg?style=flat-square)]
 (https://pypi.python.org/pypi/Flask-Celery-Helper/)
 
 ## Attribution

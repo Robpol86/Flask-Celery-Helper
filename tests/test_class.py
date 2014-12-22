@@ -1,4 +1,3 @@
-from flask import current_app
 import pytest
 
 from flask.ext.celery import Celery
@@ -13,11 +12,13 @@ class FakeApp(object):
         pass
 
 
-def test_multiple():
-    assert 'celery' in current_app.extensions
+@pytest.mark.parametrize('result', (True, False))
+def test_multiple(get_app, result):
+    app = get_app(result=result, eager=True)
+    assert 'celery' in app.extensions
 
     with pytest.raises(ValueError):
-        Celery(current_app)
+        Celery(app)
 
 
 def test_one_dumb_line():

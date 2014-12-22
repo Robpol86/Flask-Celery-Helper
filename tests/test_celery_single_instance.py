@@ -1,21 +1,27 @@
 """Test flask_celery.single_instance()."""
-from flask import current_app
+
 import pytest
 
 from flask.ext.celery import CELERY_LOCK
 
 
-def test_basic(add_task):
+@pytest.mark.parametrize('result', (True, False))
+def test_basic(get_app, get_tasks, result):
     """Test task to make sure it works before testing instance decorator."""
+    app = get_app(result=result, eager=True)
+    add_task = get_tasks(app)['add']
     expected = 8
     actual = add_task.apply(args=(4, 4)).get()
     assert expected == actual
 
 
-def test_instance(add_task):
+@pytest.mark.parametrize('result', (True, False))
+def test_instance(get_app, get_tasks, result):
     """Test for exception to be raised."""
     # Prepare.
-    redis = current_app.extensions['redis'].redis
+    app = get_app(result=result, eager=True)
+    add_task = get_tasks(app)['add']
+    redis = app.extensions['redis'].redis
     redis_key = CELERY_LOCK.format(task_name='tests.conftest.add')
     lock = redis.lock(redis_key, timeout=1)
     have_lock = lock.acquire(blocking=False)
@@ -27,10 +33,13 @@ def test_instance(add_task):
     lock.release()
 
 
-def test_instance_include_args(mul_task):
+@pytest.mark.parametrize('result', (True, False))
+def test_instance_include_args(get_app, get_tasks, result):
     """Same as test_instance() but with single_instance(include_args=True)."""
     # Prepare.
-    redis = current_app.extensions['redis'].redis
+    app = get_app(result=result, eager=True)
+    mul_task = get_tasks(app)['mul']
+    redis = app.extensions['redis'].redis
     redis_key = CELERY_LOCK.format(task_name='tests.conftest.mul.args.3d6442056c1bdf824b13ee277b62050c')
     lock = redis.lock(redis_key, timeout=1)
     have_lock = lock.acquire(blocking=False)
