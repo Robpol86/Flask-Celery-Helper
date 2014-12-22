@@ -32,14 +32,14 @@ after_build:
 
 test_script:
   #- python setup.py test  # SQLAlchemy SQLite
-  #- BROKER=rabbit python setup.py test
-  - BROKER=redis python setup.py test
-  #- BROKER=redis_sock python setup.py test
-  #- BROKER=mongo python setup.py test
-  #- BROKER=couch python setup.py test
-  #- BROKER=beanstalk python setup.py test
-  #- BROKER=iron python setup.py test
-  #- BROKER=mysql python setup.py test
-  #- BROKER=postgres python setup.py test
+  #- cmd /C "set BROKER=rabbit && python setup.py test"
+  - cmd /C "set BROKER=redis && python setup.py test"
+  #- cmd /C "set BROKER=redis_sock && python setup.py test"
+  #- cmd /C "set BROKER=mongo && python setup.py test"
+  #- cmd /C "set BROKER=couch && python setup.py test"
+  #- cmd /C "set BROKER=beanstalk && python setup.py test"
+  #- cmd /C "set BROKER=iron && python setup.py test"
+  #- cmd /C "set BROKER=mysql && python setup.py test"
+  #- cmd /C "set BROKER=postgres && python setup.py test"
 
 after_test: codecov

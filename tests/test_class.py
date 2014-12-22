@@ -2,6 +2,8 @@ import pytest
 
 from flask.ext.celery import Celery
 
+from tests.instances import app
+
 
 class FakeApp(object):
     config = dict(CELERY_BROKER_URL='redis://localhost', CELERY_RESULT_BACKEND='redis://localhost')
@@ -12,9 +14,7 @@ class FakeApp(object):
         pass
 
 
-@pytest.mark.parametrize('result', (True, False))
-def test_multiple(get_app, result):
-    app = get_app(result=result, eager=True)
+def test_multiple():
     assert 'celery' in app.extensions
 
     with pytest.raises(ValueError):
@@ -22,6 +22,6 @@ def test_multiple(get_app, result):
 
 
 def test_one_dumb_line():
-    app = FakeApp()
-    Celery(app)
-    assert 'celery' in app.extensions
+    flask_app = FakeApp()
+    Celery(flask_app)
+    assert 'celery' in flask_app.extensions
