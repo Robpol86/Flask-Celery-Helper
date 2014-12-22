@@ -28,7 +28,7 @@ build_script:
 after_build:
   - cinst redis-64
   - redis-server --service-install
-  - redis-server --service-start --service-name redisService
+  - redis-server --service-start
 
 test_script:
   #- python setup.py test  # SQLAlchemy SQLite
