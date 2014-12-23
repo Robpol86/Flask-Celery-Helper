@@ -1,6 +1,6 @@
 environment:
   CODECOV_TOKEN:
-    secure: 180d26a6-492b-49ef-a0bd-80ec8e2183f7
+    secure: SUr0uj2ygHCZaTNHy+OnVmmkR3ZJoE8wz5SaT9uK2xDSoVi4EvFg88v8JmCWtJ5r
   PYTHONIOENCODING: utf-8
 
   matrix:
@@ -32,14 +32,14 @@ after_build:
 
 test_script:
   #- python setup.py test  # SQLAlchemy SQLite
-  #- cmd /C "set BROKER=rabbit && python setup.py test"
-  - cmd /C "set BROKER=redis && python setup.py test"
-  #- cmd /C "set BROKER=redis_sock && python setup.py test"
-  #- cmd /C "set BROKER=mongo && python setup.py test"
-  #- cmd /C "set BROKER=couch && python setup.py test"
-  #- cmd /C "set BROKER=beanstalk && python setup.py test"
-  #- cmd /C "set BROKER=iron && python setup.py test"
-  #- cmd /C "set BROKER=mysql && python setup.py test"
-  #- cmd /C "set BROKER=postgres && python setup.py test"
+  #- cmd /C "set BROKER=rabbit&& python setup.py test"
+  - cmd /C "set BROKER=redis&& python setup.py test"
+  #- cmd /C "set BROKER=redis_sock&& python setup.py test"
+  #- cmd /C "set BROKER=mongo&& python setup.py test"
+  #- cmd /C "set BROKER=couch&& python setup.py test"
+  #- cmd /C "set BROKER=beanstalk&& python setup.py test"
+  #- cmd /C "set BROKER=iron&& python setup.py test"
+  #- cmd /C "set BROKER=mysql&& python setup.py test"
+  #- cmd /C "set BROKER=postgres&& python setup.py test"
 
 after_test: codecov
