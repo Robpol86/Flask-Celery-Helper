@@ -16,7 +16,7 @@ script:
   #- python setup.py test  # SQLAlchemy SQLite
   #- BROKER=rabbit python setup.py test
   - BROKER=redis python setup.py test
-  #- BROKER=redis_sock python setup.py test
+  - BROKER=redis_sock,/tmp/redis.sock python setup.py test
   #- BROKER=mongo python setup.py test
   #- BROKER=couch python setup.py test
   #- BROKER=beanstalk python setup.py test
@@ -25,6 +25,9 @@ script:
   #- BROKER=postgres python setup.py test
 
 after_success: codecov
+
+before_script:
+  - echo -e "daemonize yes\nunixsocket /tmp/redis.sock\nport 0" |redis-server -
 
 services:
   - redis-server

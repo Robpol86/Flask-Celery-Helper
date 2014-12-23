@@ -22,8 +22,8 @@ def generate_config():
     elif os.environ.get('BROKER') == 'redis':
         config['REDIS_URL'] = 'redis://localhost/1'
         config['CELERY_BROKER_URL'] = config['REDIS_URL']
-    elif os.environ.get('BROKER') == 'redis_sock':
-        config['REDIS_URL'] = 'redis+socket://redis.sock'
+    elif os.environ.get('BROKER', '').startswith('redis_sock,'):
+        config['REDIS_URL'] = 'redis+socket://' + os.environ['BROKER'].split(',', 1)[1]
         config['CELERY_BROKER_URL'] = config['REDIS_URL']
     elif os.environ.get('BROKER') == 'mongo':
         config['CELERY_BROKER_URL'] = 'mongodb://user:pass@localhost/test'
