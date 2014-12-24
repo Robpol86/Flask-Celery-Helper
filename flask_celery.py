@@ -182,9 +182,12 @@ def single_instance(func=None, lock_timeout=None, include_args=False):
             task_identifier += '.args.{0}'.format(hashlib.md5(merged_args.encode('utf-8')).hexdigest())
 
         # Select the manager.
-        backend = current_app.extensions['celery'].celery.backend
-        backend_url = getattr(backend, 'url', getattr(backend, 'dburi', '')).split('://')[0]
-        if 'redis' in backend_url:
+        try:
+            backend_url = current_app.extensions['celery'].celery.backend.url
+        except NotImplementedError:
+            backend_url = current_app.extensions['celery'].celery.backend.dburi
+        backend = backend_url.split('://')[0]
+        if 'redis' in backend:
             lock_manager = _LockManagerRedis(celery_self, lock_timeout, task_identifier)
         else:
             raise NotImplementedError
