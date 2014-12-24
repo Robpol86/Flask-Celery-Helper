@@ -8,12 +8,16 @@ from redis.exceptions import LockError
 from tests.instances import app, celery
 
 
-def test_basic():
-    """Test task to make sure it works before testing instance decorator."""
-    add_task = celery.tasks['tests.instances.add']
-    expected = 8
-    actual = add_task.apply_async(args=(4, 4)).get()
-    assert expected == actual
+@pytest.mark.parametrize('task_name,expected', [('tests.instances.add', 8), ('tests.instances.mul', 16)])
+def test_basic(task_name, expected):
+    task = celery.tasks[task_name]
+    assert expected == task.apply_async(args=(4, 4)).get()
+
+
+#@pytest.mark.parametrize('task_name,expected', [('tests.instances.add', 8), ('tests.instances.mul', 16)])
+#def test_collision(task_name, expected):
+#    # First run the task and prevent it from removing the lock.
+#    pass
 
 
 def test_instance():

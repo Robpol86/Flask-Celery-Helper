@@ -82,6 +82,26 @@ class _LockManagerRedis(_LockManager):
         self.lock.release()
 
 
+def _select_manager(backend_name):
+    """Selects the proper LockManager based on the current backend used by Celery.
+
+    Raises:
+    NotImplementedError if Celery is using an unsupported backend.
+
+    Positional arguments:
+    backend -- Class name of the current Celery backend. Usually value of:
+        current_app.extensions['celery'].celery.backend.__class__.__name__.
+
+    Returns:
+    Class definition object (not instance). One of the _LockManager* classes.
+    """
+    if backend_name == 'RedisBackend':
+        lock_manager = _LockManagerRedis
+    else:
+        raise NotImplementedError
+    return lock_manager
+
+
 class _CeleryState(object):
     """Remembers the configuration for the (celery, app) tuple. Modeled from SQLAlchemy."""
 
@@ -192,11 +212,8 @@ def single_instance(func=None, lock_timeout=None, include_args=False):
             task_identifier += '.args.{0}'.format(hashlib.md5(merged_args.encode('utf-8')).hexdigest())
 
         # Select the manager.
-        backend = current_app.extensions['celery'].celery.backend.__class__.__name__
-        if backend == 'RedisBackend':
-            lock_manager = _LockManagerRedis(celery_self, lock_timeout, task_identifier)
-        else:
-            raise NotImplementedError
+        manager_class = _select_manager(current_app.extensions['celery'].celery.backend.__class__.__name__)
+        lock_manager = manager_class(celery_self, lock_timeout, task_identifier)
 
         # Lock and execute.
         with lock_manager:
