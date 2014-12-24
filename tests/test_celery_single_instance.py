@@ -2,7 +2,7 @@
 
 import pytest
 
-from flask.ext.celery import CELERY_LOCK
+from flask.ext.celery import _LockManagerRedis, OtherInstanceError
 from redis.exceptions import LockError
 
 from tests.instances import app, celery
@@ -21,14 +21,14 @@ def test_instance():
     # Prepare.
     add_task = celery.tasks['tests.instances.add']
     redis = app.extensions['redis'].redis
-    redis_key = CELERY_LOCK.format(task_name='tests.instances.add')
+    redis_key = _LockManagerRedis.CELERY_LOCK_REDIS.format(task_id='tests.instances.add')
     lock = redis.lock(redis_key, timeout=1)
     have_lock = lock.acquire(blocking=False)
     assert True == bool(have_lock)
     # Test.
-    with pytest.raises(RuntimeError) as e:
+    with pytest.raises(OtherInstanceError) as e:
         add_task.apply_async(args=(4, 4)).get()
-    assert 'Failed to acquire lock.' == str(e.value)
+    assert 'Failed to acquire lock, tests.instances.add already running.' == str(e.value)
     lock.release()
 
 
@@ -37,16 +37,18 @@ def test_instance_include_args():
     # Prepare.
     mul_task = celery.tasks['tests.instances.mul']
     redis = app.extensions['redis'].redis
-    redis_key = CELERY_LOCK.format(task_name='tests.instances.mul.args.3d6442056c1bdf824b13ee277b62050c')
+    redis_key = _LockManagerRedis.CELERY_LOCK_REDIS.format(
+        task_id='tests.instances.mul.args.3d6442056c1bdf824b13ee277b62050c'
+    )
     lock = redis.lock(redis_key, timeout=1)
     have_lock = lock.acquire(blocking=False)
     assert True == bool(have_lock)
     # Test with different args.
     assert 12 == mul_task.apply_async(args=(4, 3)).get()
     # Test with matching.
-    with pytest.raises(RuntimeError) as e:
+    with pytest.raises(OtherInstanceError) as e:
         mul_task.apply_async(args=(4, 4)).get()
-    assert 'Failed to acquire lock.' == str(e.value)
+    assert str(e.value).startswith('Failed to acquire lock, tests.instances.mul.args.')
     try:
         lock.release()
     except LockError:

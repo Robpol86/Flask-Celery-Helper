@@ -36,7 +36,6 @@ test_script:
   #- python setup.py test  # SQLAlchemy SQLite
   #- cmd /C "set BROKER=rabbit&& python setup.py test"
   - cmd /C "set BROKER=redis&& python setup.py test"
-  - cmd /C "set BROKER=redis_sock,%TEMP%\redis.sock&& python setup.py test"
   #- cmd /C "set BROKER=mongo&& python setup.py test"
   #- cmd /C "set BROKER=couch&& python setup.py test"
   #- cmd /C "set BROKER=beanstalk&& python setup.py test"

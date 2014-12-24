@@ -41,8 +41,9 @@ def generate_config():
         else:
             config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test_database.sqlite'
         config['CELERY_BROKER_URL'] = 'sqla+' + config['SQLALCHEMY_DATABASE_URI']
+        config['CELERY_RESULT_BACKEND'] = 'db+' + config['SQLALCHEMY_DATABASE_URI']
 
-    if 'CELERY_BROKER_URL' in config:
+    if 'CELERY_BROKER_URL' in config and 'CELERY_RESULT_BACKEND' not in config:
         config['CELERY_RESULT_BACKEND'] = config['CELERY_BROKER_URL']
 
     return config
@@ -91,10 +92,12 @@ app, celery = get_flask_celery_apps()
 def add(x, y):
     return x + y
 
+
 @celery.task(bind=True)
 @single_instance(include_args=True)
 def mul(x, y):
     return x * y
+
 
 @celery.task(bind=True)
 @single_instance
