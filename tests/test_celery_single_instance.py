@@ -21,7 +21,7 @@ def test_instance():
     # Prepare.
     add_task = celery.tasks['tests.instances.add']
     redis = app.extensions['redis'].redis
-    redis_key = _LockManagerRedis.CELERY_LOCK_REDIS.format(task_id='tests.instances.add')
+    redis_key = _LockManagerRedis.CELERY_LOCK.format(task_id='tests.instances.add')
     lock = redis.lock(redis_key, timeout=1)
     have_lock = lock.acquire(blocking=False)
     assert True == bool(have_lock)
@@ -37,7 +37,7 @@ def test_instance_include_args():
     # Prepare.
     mul_task = celery.tasks['tests.instances.mul']
     redis = app.extensions['redis'].redis
-    redis_key = _LockManagerRedis.CELERY_LOCK_REDIS.format(
+    redis_key = _LockManagerRedis.CELERY_LOCK.format(
         task_id='tests.instances.mul.args.3d6442056c1bdf824b13ee277b62050c'
     )
     lock = redis.lock(redis_key, timeout=1)

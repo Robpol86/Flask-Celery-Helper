@@ -20,10 +20,8 @@ class OtherInstanceError(Exception):
     pass
 
 
-class _LockManagerRedis(object):
-    """Handles locking/unlocking for Redis backends."""
-
-    CELERY_LOCK_REDIS = '_celery.single_instance.{task_id}'
+class _LockManager(object):
+    """Base class for other lock managers."""
 
     def __init__(self, celery_self, lock_timeout, task_identifier):
         """May raise NotImplementedError if the Celery backend is not supported.
@@ -40,8 +38,32 @@ class _LockManagerRedis(object):
         self.log = getLogger('{0}:{1}'.format(self.__class__.__name__, task_identifier))
 
     def __enter__(self):
+        raise NotImplementedError
+
+    def __exit__(self, *_):
+        raise NotImplementedError
+
+    @property
+    def timeout(self):
+        """Determines the timeout value (in seconds) of the lock."""
+        time_limit = int(current_app.config.get('CELERYD_TASK_TIME_LIMIT', 0))
+        soft_time_limit = int(current_app.config.get('CELERYD_TASK_SOFT_TIME_LIMIT', 0))
+        last_resort = (60 * 5)
+        final_answer = (
+            self.lock_timeout or self.celery_self.soft_time_limit or self.celery_self.time_limit or soft_time_limit
+            or time_limit or last_resort
+        )
+        return int(final_answer + 5)
+
+
+class _LockManagerRedis(_LockManager):
+    """Handles locking/unlocking for Redis backends."""
+
+    CELERY_LOCK = '_celery.single_instance.{task_id}'
+
+    def __enter__(self):
         redis = current_app.extensions['redis'].redis
-        redis_key = self.CELERY_LOCK_REDIS.format(task_id=self.task_identifier)
+        redis_key = self.CELERY_LOCK.format(task_id=self.task_identifier)
         timeout = self.timeout
         # Obtain lock.
         self.lock = redis.lock(redis_key, timeout=timeout)
@@ -58,18 +80,6 @@ class _LockManagerRedis(object):
             return
         self.log.debug('Releasing lock.')
         self.lock.release()
-
-    @property
-    def timeout(self):
-        """Determines the timeout value (in seconds) of the lock."""
-        time_limit = int(current_app.config.get('CELERYD_TASK_TIME_LIMIT', 0))
-        soft_time_limit = int(current_app.config.get('CELERYD_TASK_SOFT_TIME_LIMIT', 0))
-        last_resort = (60 * 5)
-        final_answer = (
-            self.lock_timeout or self.celery_self.soft_time_limit or self.celery_self.time_limit or soft_time_limit
-            or time_limit or last_resort
-        )
-        return int(final_answer + 5)
 
 
 class _CeleryState(object):
@@ -182,12 +192,8 @@ def single_instance(func=None, lock_timeout=None, include_args=False):
             task_identifier += '.args.{0}'.format(hashlib.md5(merged_args.encode('utf-8')).hexdigest())
 
         # Select the manager.
-        try:
-            backend_url = current_app.extensions['celery'].celery.backend.url
-        except NotImplementedError:
-            backend_url = current_app.extensions['celery'].celery.backend.dburi
-        backend = backend_url.split('://')[0]
-        if 'redis' in backend:
+        backend = current_app.extensions['celery'].celery.backend.__class__.__name__
+        if backend == 'RedisBackend':
             lock_manager = _LockManagerRedis(celery_self, lock_timeout, task_identifier)
         else:
             raise NotImplementedError
