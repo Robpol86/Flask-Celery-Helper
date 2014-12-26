@@ -94,7 +94,7 @@ def add(x, y):
 
 
 @celery.task(bind=True)
-@single_instance(include_args=True)
+@single_instance(include_args=True, lock_timeout=20)
 def mul(x, y):
     return x * y
 
