@@ -1,5 +1,4 @@
 import os
-import time
 
 from flask import Flask
 from flask.ext.celery import Celery, single_instance
@@ -67,7 +66,8 @@ def generate_context(config):
         db = SQLAlchemy(flask_app)
         db.create_all()
     elif 'REDIS_URL' in flask_app.config:
-        Redis(flask_app)
+        redis = Redis(flask_app)
+        redis.flushdb()
 
     return flask_app
 
@@ -100,7 +100,6 @@ def mul(x, y):
 
 
 @celery.task(bind=True)
-@single_instance
+@single_instance()
 def sub(x, y):
-    time.sleep(1)
-    return x + y
+    return x - y

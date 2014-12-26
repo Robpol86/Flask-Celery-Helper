@@ -23,19 +23,23 @@ class OtherInstanceError(Exception):
 class _LockManager(object):
     """Base class for other lock managers."""
 
-    def __init__(self, celery_self, lock_timeout, task_identifier):
+    def __init__(self, celery_self, timeout, include_args, args, kwargs):
         """May raise NotImplementedError if the Celery backend is not supported.
 
         Positional arguments:
         celery_self -- from wrapped() within single_instance(). It is the `self` object specified in a binded Celery
             task definition (implicit first argument of the Celery task when @celery.task(bind=True) is used).
-        lock_timeout -- value from single_instance()'s arguments.
-        task_identifier -- unique string representing the task.
+        timeout -- lock's timeout value in seconds.
+        include_args -- if single instance should take arguments into account (boolean).
+        args -- the task instance's args.
+        kwargs -- the task instance's kwargs.
         """
         self.celery_self = celery_self
-        self.lock_timeout = lock_timeout
-        self.task_identifier = task_identifier
-        self.log = getLogger('{0}:{1}'.format(self.__class__.__name__, task_identifier))
+        self.timeout = timeout
+        self.include_args = include_args
+        self.args = args
+        self.kwargs = kwargs
+        self.log = getLogger('{0}:{1}'.format(self.__class__.__name__, self.task_identifier))
 
     def __enter__(self):
         raise NotImplementedError
@@ -44,16 +48,20 @@ class _LockManager(object):
         raise NotImplementedError
 
     @property
-    def timeout(self):
-        """Determines the timeout value (in seconds) of the lock."""
-        time_limit = int(current_app.config.get('CELERYD_TASK_TIME_LIMIT', 0))
-        soft_time_limit = int(current_app.config.get('CELERYD_TASK_SOFT_TIME_LIMIT', 0))
-        last_resort = (60 * 5)
-        final_answer = (
-            self.lock_timeout or self.celery_self.soft_time_limit or self.celery_self.time_limit or soft_time_limit
-            or time_limit or last_resort
-        )
-        return int(final_answer + 5)
+    def task_identifier(self):
+        """Returns the unique identifier (string) of a task instance."""
+        task_id = self.celery_self.name
+        if self.include_args:
+            merged_args = str(self.args) + str([(k, self.kwargs[k]) for k in sorted(self.kwargs)])
+            task_id += '.args.{0}'.format(hashlib.md5(merged_args.encode('utf-8')).hexdigest())
+        return task_id
+
+    @property
+    def is_already_running(self):
+        raise NotImplementedError
+
+    def reset_lock(self):
+        raise NotImplementedError
 
 
 class _LockManagerRedis(_LockManager):
@@ -62,12 +70,11 @@ class _LockManagerRedis(_LockManager):
     CELERY_LOCK = '_celery.single_instance.{task_id}'
 
     def __enter__(self):
-        redis = current_app.extensions['redis'].redis
+        self.redis = current_app.extensions['redis'].redis
         redis_key = self.CELERY_LOCK.format(task_id=self.task_identifier)
-        timeout = self.timeout
         # Obtain lock.
-        self.lock = redis.lock(redis_key, timeout=timeout)
-        self.log.debug('Timeout {0}s | Redis key {1}'.format(timeout, redis_key))
+        self.lock = self.redis.lock(redis_key, timeout=self.timeout)
+        self.log.debug('Timeout {0}s | Redis key {1}'.format(self.timeout, redis_key))
         if not self.lock.acquire(blocking=False):
             self.log.debug('Another instance is running.')
             raise OtherInstanceError('Failed to acquire lock, {0} already running.'.format(self.task_identifier))
@@ -80,6 +87,15 @@ class _LockManagerRedis(_LockManager):
             return
         self.log.debug('Releasing lock.')
         self.lock.release()
+
+    @property
+    def is_already_running(self):
+        redis_key = self.CELERY_LOCK.format(task_id=self.task_identifier)
+        return self.redis.exists(redis_key)
+
+    def reset_lock(self):
+        redis_key = self.CELERY_LOCK.format(task_id=self.task_identifier)
+        self.redis.delete(redis_key)
 
 
 def _select_manager(backend_name):
@@ -205,15 +221,10 @@ def single_instance(func=None, lock_timeout=None, include_args=False):
 
     @wraps(func)
     def wrapped(celery_self, *args, **kwargs):
-        # Generate task identifier.
-        task_identifier = celery_self.name
-        if include_args:
-            merged_args = str(args) + str([(k, kwargs[k]) for k in sorted(kwargs)])
-            task_identifier += '.args.{0}'.format(hashlib.md5(merged_args.encode('utf-8')).hexdigest())
-
-        # Select the manager.
-        manager_class = _select_manager(current_app.extensions['celery'].celery.backend.__class__.__name__)
-        lock_manager = manager_class(celery_self, lock_timeout, task_identifier)
+        # Select the manager and get timeout.
+        timeout = lock_timeout or celery_self.soft_time_limit or celery_self.time_limit or (60 * 5)
+        manager_class = _select_manager(celery_self.backend.__class__.__name__)
+        lock_manager = manager_class(celery_self, timeout, include_args, args, kwargs)
 
         # Lock and execute.
         with lock_manager:
