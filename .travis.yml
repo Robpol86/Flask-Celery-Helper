@@ -27,8 +27,8 @@ after_success: codecov
 
 before_script:
   - echo -e "daemonize yes\nunixsocket /tmp/redis.sock\nport 0" |redis-server -
-  - mysql -e 'CREATE DATABASE flask_celery_helper_test;'
-  - mysql -e 'GRANT ALL PRIVILEGES ON flask_celery_helper_test.* TO "user"@"localhost" IDENTIFIED BY "pass";'
+  - mysql -u root -e 'CREATE DATABASE flask_celery_helper_test;'
+  - mysql -u root -e 'GRANT ALL PRIVILEGES ON flask_celery_helper_test.* TO "user"@"localhost" IDENTIFIED BY "pass";'
 
 services:
   - redis-server

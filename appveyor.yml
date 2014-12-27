@@ -13,6 +13,7 @@ environment:
 
 init:
   - IF DEFINED PYTHON set PATH=%PYTHON%;%PYTHON%\Scripts;%PATH%
+  - set PATH=%PATH%;C:\Program Files\MySQL\MySQL Server 5.6\bin
 
 install:
   - ps: Start-FileDownload https://raw.github.com/pypa/pip/master/contrib/get-pip.py
@@ -29,11 +30,8 @@ after_build:
   - cinst redis-64
   - redis-server --service-install
   - redis-server --service-start
-  - >
-    "C:\Program Files\MySQL\MySQL Server 5.6\bin\mysql" -u root -p"Password12!" -e "
-        CREATE DATABASE flask_celery_helper_test;
-        GRANT ALL PRIVILEGES ON flask_celery_helper_test.* TO 'user'@'localhost' IDENTIFIED BY 'pass';
-    "
+  - mysql -u root -p"Password12!" -e "CREATE DATABASE flask_celery_helper_test;"
+  - mysql -u root -p"Password12!" -e "GRANT ALL PRIVILEGES ON flask_celery_helper_test.* TO 'user'@'localhost' IDENTIFIED BY 'pass';"
 
 test_script:
   - python setup.py test  # SQLAlchemy SQLite
