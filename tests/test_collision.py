@@ -35,6 +35,7 @@ def test_collision(task_name, expected):
         assert str(e.value).startswith('Failed to acquire lock, {0}.args.'.format(task_name))
     else:
         assert 'Failed to acquire lock, {0} already running.'.format(task_name) == str(e.value)
+    assert manager_instance[0].is_already_running is True
 
     # Clean up.
     manager_instance[0].reset_lock()
@@ -66,9 +67,11 @@ def test_include_args():
     with pytest.raises(OtherInstanceError) as e:
         task.apply_async(args=(4, 4)).get()
     assert str(e.value).startswith('Failed to acquire lock, tests.instances.mul.args.')
+    assert manager_instance[0].is_already_running is True
     with pytest.raises(OtherInstanceError) as e:
         task.apply_async(args=(5, 4)).get()
     assert str(e.value).startswith('Failed to acquire lock, tests.instances.mul.args.')
+    assert manager_instance[1].is_already_running is True
 
     # Clean up.
     manager_instance[0].reset_lock()

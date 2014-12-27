@@ -34,7 +34,7 @@ def generate_config():
         config['CELERY_BROKER_URL'] = 'ironmq://project:token@/test'
     else:
         if os.environ.get('BROKER') == 'mysql':
-            config['SQLALCHEMY_DATABASE_URI'] = 'mysql://user:pass@localhost/test'
+            config['SQLALCHEMY_DATABASE_URI'] = 'mysql://user:pass@localhost/flask_celery_helper_test'
         elif os.environ.get('BROKER') == 'postgres':
             config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://user:pass@localhost/test'
         else:

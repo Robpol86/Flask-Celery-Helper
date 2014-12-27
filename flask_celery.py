@@ -41,12 +41,6 @@ class _LockManager(object):
         self.kwargs = kwargs
         self.log = getLogger('{0}:{1}'.format(self.__class__.__name__, self.task_identifier))
 
-    def __enter__(self):
-        raise NotImplementedError
-
-    def __exit__(self, *_):
-        raise NotImplementedError
-
     @property
     def task_identifier(self):
         """Returns the unique identifier (string) of a task instance."""
@@ -55,13 +49,6 @@ class _LockManager(object):
             merged_args = str(self.args) + str([(k, self.kwargs[k]) for k in sorted(self.kwargs)])
             task_id += '.args.{0}'.format(hashlib.md5(merged_args.encode('utf-8')).hexdigest())
         return task_id
-
-    @property
-    def is_already_running(self):
-        raise NotImplementedError
-
-    def reset_lock(self):
-        raise NotImplementedError
 
 
 class _LockManagerRedis(_LockManager):
@@ -82,7 +69,7 @@ class _LockManagerRedis(_LockManager):
             self.log.debug('Got lock, running.')
 
     def __exit__(self, exc_type, *_):
-        if isinstance(exc_type, OtherInstanceError):
+        if exc_type == OtherInstanceError:
             # Failed to get lock last time, not releasing.
             return
         self.log.debug('Releasing lock.')
@@ -96,6 +83,10 @@ class _LockManagerRedis(_LockManager):
     def reset_lock(self):
         redis_key = self.CELERY_LOCK.format(task_id=self.task_identifier)
         self.redis.delete(redis_key)
+
+
+class _LockManagerDB(_LockManager):
+    pass
 
 
 def _select_manager(backend_name):
@@ -113,6 +104,8 @@ def _select_manager(backend_name):
     """
     if backend_name == 'RedisBackend':
         lock_manager = _LockManagerRedis
+    elif backend_name == 'DatabaseBackend':
+        lock_manager = _LockManagerDB
     else:
         raise NotImplementedError
     return lock_manager
