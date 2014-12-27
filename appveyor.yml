@@ -29,6 +29,11 @@ after_build:
   - cinst redis-64
   - redis-server --service-install
   - redis-server --service-start
+  - >
+    "C:\Program Files\MySQL\MySQL Server 5.6\bin\mysql" -u root -p"Password12!" -e "
+        CREATE DATABASE flask_celery_helper_test;
+        GRANT ALL PRIVILEGES ON flask_celery_helper_test.* TO 'user'@'localhost' IDENTIFIED BY 'pass';
+    "
 
 test_script:
   - python setup.py test  # SQLAlchemy SQLite
@@ -38,7 +43,11 @@ test_script:
   #- cmd /C "set BROKER=couch&& python setup.py test"
   #- cmd /C "set BROKER=beanstalk&& python setup.py test"
   #- cmd /C "set BROKER=iron&& python setup.py test"
-  #- cmd /C "set BROKER=mysql&& python setup.py test"
+  - cmd /C "set BROKER=mysql&& python setup.py test"
   #- cmd /C "set BROKER=postgres&& python setup.py test"
 
 after_test: codecov
+
+services:
+  - mysql
+  - postgresql

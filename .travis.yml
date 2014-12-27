@@ -3,7 +3,6 @@ language: python
 python:
   - 2.6
   - 2.7
-  - pypy
   - 3.3
   - 3.4
 
@@ -21,13 +20,15 @@ script:
   #- BROKER=couch python setup.py test
   #- BROKER=beanstalk python setup.py test
   #- BROKER=iron python setup.py test
-  #- BROKER=mysql python setup.py test
+  - BROKER=mysql python setup.py test
   #- BROKER=postgres python setup.py test
 
 after_success: codecov
 
 before_script:
   - echo -e "daemonize yes\nunixsocket /tmp/redis.sock\nport 0" |redis-server -
+  - mysql -e 'CREATE DATABASE flask_celery_helper_test;'
+  - mysql -e 'GRANT ALL PRIVILEGES ON flask_celery_helper_test.* TO "user"@"localhost" IDENTIFIED BY "pass";'
 
 services:
   - redis-server
