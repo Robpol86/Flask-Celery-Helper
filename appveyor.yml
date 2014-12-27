@@ -31,7 +31,7 @@ after_build:
   - redis-server --service-start
 
 test_script:
-  #- python setup.py test  # SQLAlchemy SQLite
+  - python setup.py test  # SQLAlchemy SQLite
   #- cmd /C "set BROKER=rabbit&& python setup.py test"
   - cmd /C "set BROKER=redis&& python setup.py test"
   #- cmd /C "set BROKER=mongo&& python setup.py test"

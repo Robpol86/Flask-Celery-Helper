@@ -34,7 +34,7 @@ def generate_config():
         config['CELERY_BROKER_URL'] = 'ironmq://project:token@/test'
     else:
         if os.environ.get('BROKER') == 'mysql':
-            config['SQLALCHEMY_DATABASE_URI'] = 'mysql://user:pass@localhost/flask_celery_helper_test'
+            config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://user:pass@localhost/flask_celery_helper_test'
         elif os.environ.get('BROKER') == 'postgres':
             config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://user:pass@localhost/test'
         else:
@@ -61,15 +61,15 @@ def generate_context(config):
     flask_app.config.update(config)
     flask_app.config['TESTING'] = True
     flask_app.config['CELERY_ACCEPT_CONTENT'] = ['pickle']
-    Celery(flask_app)
 
     if 'SQLALCHEMY_DATABASE_URI' in flask_app.config:
         db = SQLAlchemy(flask_app)
-        db.create_all()
+        db.engine.execute('DROP TABLE IF EXISTS celery_tasksetmeta;')
     elif 'REDIS_URL' in flask_app.config:
         redis = Redis(flask_app)
         redis.flushdb()
 
+    Celery(flask_app)
     return flask_app
 
 

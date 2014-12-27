@@ -4,6 +4,7 @@ https://github.com/Robpol86/Flask-Celery-Helper
 https://pypi.python.org/pypi/Flask-Celery-Helper
 """
 
+from datetime import datetime, timedelta
 from functools import partial, wraps
 import hashlib
 from logging import getLogger
@@ -83,7 +84,47 @@ class _LockManagerRedis(_LockManager):
 
 
 class _LockManagerDB(_LockManager):
-    pass
+    """Handles locking/unlocking for SQLite/MySQL/PostgreSQL/etc backends."""
+
+    def __init__(self, celery_self, timeout, include_args, args, kwargs):
+        super(_LockManagerDB, self).__init__(celery_self, timeout, include_args, args, kwargs)
+        self.save_group = getattr(self.celery_self.backend, '_save_group')
+        self.restore_group = getattr(self.celery_self.backend, '_restore_group')
+        self.delete_group = getattr(self.celery_self.backend, '_delete_group')
+
+    def __enter__(self):
+        self.log.debug('Timeout {0}s'.format(self.timeout))
+        try:
+            self.save_group(self.task_identifier, None)
+        except Exception as e:
+            if 'IntegrityError' not in str(e):
+                raise
+            difference = datetime.utcnow() - self.restore_group(self.task_identifier)['date_done']
+            if difference < timedelta(seconds=self.timeout):
+                self.log.debug('Another instance is running.')
+                raise OtherInstanceError('Failed to acquire lock, {0} already running.'.format(self.task_identifier))
+            self.log.debug('Timeout expired, stale lock found, releasing lock.')
+            self.delete_group(self.task_identifier)
+            self.save_group(self.task_identifier, None)
+            self.log.debug('Got lock, running.')
+
+    def __exit__(self, exc_type, *_):
+        if exc_type == OtherInstanceError:
+            # Failed to get lock last time, not releasing.
+            return
+        self.log.debug('Releasing lock.')
+        self.delete_group(self.task_identifier)
+
+    @property
+    def is_already_running(self):
+        date_done = (self.restore_group(self.task_identifier) or dict()).get('date_done')
+        if not date_done:
+            return False
+        difference = datetime.utcnow() - date_done
+        return difference < timedelta(seconds=self.timeout)
+
+    def reset_lock(self):
+        self.delete_group(self.task_identifier)
 
 
 def _select_manager(backend_name):
