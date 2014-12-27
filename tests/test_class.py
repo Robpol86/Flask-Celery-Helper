@@ -1,6 +1,5 @@
-import pytest
-
 from flask.ext.celery import Celery
+import pytest
 
 from tests.instances import app
 

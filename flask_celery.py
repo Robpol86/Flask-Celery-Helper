@@ -222,7 +222,12 @@ def single_instance(func=None, lock_timeout=None, include_args=False):
     @wraps(func)
     def wrapped(celery_self, *args, **kwargs):
         # Select the manager and get timeout.
-        timeout = lock_timeout or celery_self.soft_time_limit or celery_self.time_limit or (60 * 5)
+        timeout = (
+            lock_timeout or celery_self.soft_time_limit or celery_self.time_limit
+            or celery_self.app.conf.get('CELERYD_TASK_SOFT_TIME_LIMIT')
+            or celery_self.app.conf.get('CELERYD_TASK_TIME_LIMIT')
+            or (60 * 5)
+        )
         manager_class = _select_manager(celery_self.backend.__class__.__name__)
         lock_manager = manager_class(celery_self, timeout, include_args, args, kwargs)
 

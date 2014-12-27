@@ -1,8 +1,5 @@
-"""Test flask_celery.single_instance()."""
-
-import pytest
-
 from flask.ext.celery import OtherInstanceError, _select_manager
+import pytest
 
 from tests.instances import celery
 

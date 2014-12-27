@@ -60,6 +60,7 @@ def generate_context(config):
     flask_app = Flask(__name__)
     flask_app.config.update(config)
     flask_app.config['TESTING'] = True
+    flask_app.config['CELERY_ACCEPT_CONTENT'] = ['pickle']
     Celery(flask_app)
 
     if 'SQLALCHEMY_DATABASE_URI' in flask_app.config:
@@ -103,3 +104,15 @@ def mul(x, y):
 @single_instance()
 def sub(x, y):
     return x - y
+
+
+@celery.task(bind=True, time_limit=70)
+@single_instance
+def add2(x, y):
+    return x + y
+
+
+@celery.task(bind=True, soft_time_limit=80)
+@single_instance
+def add3(x, y):
+    return x + y
