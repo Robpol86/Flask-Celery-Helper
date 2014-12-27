@@ -9,7 +9,6 @@ import hashlib
 from logging import getLogger
 
 from celery import _state, Celery as CeleryClass
-from flask import current_app
 
 __author__ = '@Robpol86'
 __license__ = 'MIT'
@@ -57,10 +56,8 @@ class _LockManagerRedis(_LockManager):
     CELERY_LOCK = '_celery.single_instance.{task_id}'
 
     def __enter__(self):
-        self.redis = current_app.extensions['redis'].redis
         redis_key = self.CELERY_LOCK.format(task_id=self.task_identifier)
-        # Obtain lock.
-        self.lock = self.redis.lock(redis_key, timeout=self.timeout)
+        self.lock = self.celery_self.backend.client.lock(redis_key, timeout=self.timeout)
         self.log.debug('Timeout {0}s | Redis key {1}'.format(self.timeout, redis_key))
         if not self.lock.acquire(blocking=False):
             self.log.debug('Another instance is running.')
@@ -78,11 +75,11 @@ class _LockManagerRedis(_LockManager):
     @property
     def is_already_running(self):
         redis_key = self.CELERY_LOCK.format(task_id=self.task_identifier)
-        return self.redis.exists(redis_key)
+        return self.celery_self.backend.client.exists(redis_key)
 
     def reset_lock(self):
         redis_key = self.CELERY_LOCK.format(task_id=self.task_identifier)
-        self.redis.delete(redis_key)
+        self.celery_self.backend.client.delete(redis_key)
 
 
 class _LockManagerDB(_LockManager):
