@@ -38,17 +38,14 @@ after_build:
   - psql -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE flask_celery_helper_test TO user1;"
 
 test_script:
-  - python setup.py test  # SQLAlchemy SQLite
-  #- cmd /C "set BROKER=rabbit&& python setup.py test"
-  - cmd /C "set BROKER=redis&& python setup.py test"
-  #- cmd /C "set BROKER=mongo&& python setup.py test"
-  #- cmd /C "set BROKER=couch&& python setup.py test"
-  #- cmd /C "set BROKER=beanstalk&& python setup.py test"
-  #- cmd /C "set BROKER=iron&& python setup.py test"
-  - cmd /C "set BROKER=mysql&& python setup.py test"
-  - cmd /C "set BROKER=postgres&& python setup.py test"
-
-after_test: codecov
+  - python setup.py test && codecov  # SQLAlchemy SQLite
+  - cmd /C "set BROKER=redis&& python setup.py test && codecov"
+  #- cmd /C "set BROKER=mongo&& python setup.py test && codecov"
+  #- cmd /C "set BROKER=couch&& python setup.py test && codecov"
+  #- cmd /C "set BROKER=beanstalk&& python setup.py test && codecov"
+  #- cmd /C "set BROKER=iron&& python setup.py test && codecov"
+  - cmd /C "set BROKER=mysql&& python setup.py test && codecov"
+  - cmd /C "set BROKER=postgres&& python setup.py test && codecov"
 
 services:
   - mysql

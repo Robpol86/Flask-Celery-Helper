@@ -33,7 +33,7 @@ def celery_worker():
     thread = Worker()
     thread.daemon = True
     thread.start()
-    for i in range(20):  # Wait for worker to finish initializing to avoid a race condition I've been experiencing.
+    for i in range(10):  # Wait for worker to finish initializing to avoid a race condition I've been experiencing.
         if WORKER_READY:
             break
         time.sleep(1)

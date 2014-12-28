@@ -13,18 +13,15 @@ install:
   - pip install .
 
 script:
-  - python setup.py test  # SQLAlchemy SQLite
-  #- BROKER=rabbit python setup.py test
-  - BROKER=redis python setup.py test
-  - BROKER=redis_sock,/tmp/redis.sock python setup.py test
-  #- BROKER=mongo python setup.py test
-  #- BROKER=couch python setup.py test
-  #- BROKER=beanstalk python setup.py test
-  #- BROKER=iron python setup.py test
-  - BROKER=mysql python setup.py test
-  - BROKER=postgres python setup.py test
-
-after_success: codecov
+  - python setup.py test && codecov  # SQLAlchemy SQLite
+  - BROKER=redis python setup.py test && codecov
+  - BROKER=redis_sock,/tmp/redis.sock python setup.py test && codecov
+  #- BROKER=mongo python setup.py test && codecov
+  #- BROKER=couch python setup.py test && codecov
+  #- BROKER=beanstalk python setup.py test && codecov
+  #- BROKER=iron python setup.py test && codecov
+  - BROKER=mysql python setup.py test && codecov
+  - BROKER=postgres python setup.py test && codecov
 
 before_script:
   - echo -e "daemonize yes\nunixsocket /tmp/redis.sock\nport 0" |redis-server -
@@ -36,6 +33,5 @@ before_script:
 
 services:
   - redis-server
-  - rabbitmq
   - mongodb
   - couchdb

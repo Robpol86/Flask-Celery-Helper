@@ -16,9 +16,7 @@ def generate_config():
     """
     config = dict()
 
-    if os.environ.get('BROKER') == 'rabbit':
-        config['CELERY_BROKER_URL'] = 'amqp://user:pass@localhost//'
-    elif os.environ.get('BROKER') == 'redis':
+    if os.environ.get('BROKER') == 'redis':
         config['REDIS_URL'] = 'redis://localhost/1'
         config['CELERY_BROKER_URL'] = config['REDIS_URL']
     elif os.environ.get('BROKER', '').startswith('redis_sock,'):
