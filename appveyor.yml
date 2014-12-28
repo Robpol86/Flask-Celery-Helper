@@ -38,14 +38,18 @@ after_build:
   - psql -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE flask_celery_helper_test TO user1;"
 
 test_script:
-  - python setup.py test && codecov  # SQLAlchemy SQLite
-  - cmd /C "set BROKER=redis&& python setup.py test && codecov"
-  #- cmd /C "set BROKER=mongo&& python setup.py test && codecov"
-  #- cmd /C "set BROKER=couch&& python setup.py test && codecov"
-  #- cmd /C "set BROKER=beanstalk&& python setup.py test && codecov"
-  #- cmd /C "set BROKER=iron&& python setup.py test && codecov"
-  - cmd /C "set BROKER=mysql&& python setup.py test && codecov"
-  - cmd /C "set BROKER=postgres&& python setup.py test && codecov"
+  - python setup.py test && ren .coverage .coverage.1  # SQLAlchemy SQLite
+  - cmd /C "set BROKER=redis&& python setup.py test && ren .coverage .coverage.2"
+  #- cmd /C "set BROKER=mongo&& python setup.py test && ren .coverage .coverage.3"
+  #- cmd /C "set BROKER=couch&& python setup.py test && ren .coverage .coverage.4"
+  #- cmd /C "set BROKER=beanstalk&& python setup.py test && ren .coverage .coverage.5"
+  #- cmd /C "set BROKER=iron&& python setup.py test && ren .coverage .coverage.6"
+  - cmd /C "set BROKER=mysql&& python setup.py test && ren .coverage .coverage.7"
+  - cmd /C "set BROKER=postgres&& python setup.py test && ren .coverage .coverage.8"
+
+after_test:
+  - coverage combine
+  - codecov
 
 services:
   - mysql

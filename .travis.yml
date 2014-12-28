@@ -13,15 +13,19 @@ install:
   - pip install .
 
 script:
-  - python setup.py test && codecov  # SQLAlchemy SQLite
-  - BROKER=redis python setup.py test && codecov
-  - BROKER=redis_sock,/tmp/redis.sock python setup.py test && codecov
-  #- BROKER=mongo python setup.py test && codecov
-  #- BROKER=couch python setup.py test && codecov
-  #- BROKER=beanstalk python setup.py test && codecov
-  #- BROKER=iron python setup.py test && codecov
-  - BROKER=mysql python setup.py test && codecov
-  - BROKER=postgres python setup.py test && codecov
+  - python setup.py test && mv .coverage .coverage.1  # SQLAlchemy SQLite
+  - BROKER=redis python setup.py test && mv .coverage .coverage.2
+  - BROKER=redis_sock,/tmp/redis.sock python setup.py test && mv .coverage .coverage.3
+  #- BROKER=mongo python setup.py test && mv .coverage .coverage.4
+  #- BROKER=couch python setup.py test && mv .coverage .coverage.5
+  #- BROKER=beanstalk python setup.py test && mv .coverage .coverage.6
+  #- BROKER=iron python setup.py test && mv .coverage .coverage.7
+  - BROKER=mysql python setup.py test && mv .coverage .coverage.8
+  - BROKER=postgres python setup.py test && mv .coverage .coverage.8
+
+after_success:
+  - coverage combine
+  - codecov
 
 before_script:
   - echo -e "daemonize yes\nunixsocket /tmp/redis.sock\nport 0" |redis-server -

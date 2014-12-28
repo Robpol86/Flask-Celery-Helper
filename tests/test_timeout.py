@@ -1,4 +1,6 @@
-from flask.ext.celery import _select_manager
+import time
+
+from flask.ext.celery import OtherInstanceError, _select_manager
 import pytest
 
 from tests.instances import celery
@@ -46,3 +48,29 @@ def test_settings(key, value):
     setattr(manager_class, '__exit__', original_exit)
 
     celery.conf.update({key: None})
+
+
+def test_expired():
+    celery.conf.update({'CELERYD_TASK_TIME_LIMIT': 5})
+    manager_class = _select_manager(celery.backend.__class__.__name__)
+    manager_instance = list()
+    task = celery.tasks['tests.instances.add']
+    original_exit = manager_class.__exit__
+
+    def new_exit(self, *_):
+        manager_instance.append(self)
+        return None
+    setattr(manager_class, '__exit__', new_exit)
+
+    # Run the task and don't remove the lock after a successful run.
+    assert 8 == task.apply_async(args=(4, 4)).get()
+    setattr(manager_class, '__exit__', original_exit)
+
+    # Run again, lock is still active so this should fail.
+    with pytest.raises(OtherInstanceError):
+        task.apply_async(args=(4, 4)).get()
+
+    # Wait 5 seconds (per CELERYD_TASK_TIME_LIMIT), then re-run, should work.
+    time.sleep(5)
+    assert 8 == task.apply_async(args=(4, 4)).get()
+    celery.conf.update({'CELERYD_TASK_TIME_LIMIT': None})
