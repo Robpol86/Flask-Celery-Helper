@@ -36,9 +36,10 @@ def generate_config():
         if os.environ.get('BROKER') == 'mysql':
             config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://user:pass@localhost/flask_celery_helper_test'
         elif os.environ.get('BROKER') == 'postgres':
-            config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://user:pass@localhost/test'
+            config['SQLALCHEMY_DATABASE_URI'] = 'postgresql+pg8000://user1:pass@localhost/flask_celery_helper_test'
         else:
-            config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test_database.sqlite'
+            file_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'test_database.sqlite')
+            config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + file_path
         config['CELERY_BROKER_URL'] = 'sqla+' + config['SQLALCHEMY_DATABASE_URI']
         config['CELERY_RESULT_BACKEND'] = 'db+' + config['SQLALCHEMY_DATABASE_URI']
 

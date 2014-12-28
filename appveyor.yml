@@ -2,6 +2,7 @@ environment:
   CODECOV_TOKEN:
     secure: SUr0uj2ygHCZaTNHy+OnVmmkR3ZJoE8wz5SaT9uK2xDSoVi4EvFg88v8JmCWtJ5r
   PYTHONIOENCODING: utf-8
+  PGPASSWORD: Password12!
 
   matrix:
     - PYTHON: C:\Python27
@@ -13,7 +14,7 @@ environment:
 
 init:
   - IF DEFINED PYTHON set PATH=%PYTHON%;%PYTHON%\Scripts;%PATH%
-  - set PATH=%PATH%;C:\Program Files\MySQL\MySQL Server 5.6\bin
+  - set PATH=%PATH%;C:\Program Files\MySQL\MySQL Server 5.6\bin;C:\Program Files\PostgreSQL\9.3\bin
 
 install:
   - ps: Start-FileDownload https://raw.github.com/pypa/pip/master/contrib/get-pip.py
@@ -32,6 +33,9 @@ after_build:
   - redis-server --service-start
   - mysql -u root -p"Password12!" -e "CREATE DATABASE flask_celery_helper_test;"
   - mysql -u root -p"Password12!" -e "GRANT ALL PRIVILEGES ON flask_celery_helper_test.* TO 'user'@'localhost' IDENTIFIED BY 'pass';"
+  - psql -U postgres -c "CREATE DATABASE flask_celery_helper_test;"
+  - psql -U postgres -c "CREATE USER user1 WITH PASSWORD 'pass';"
+  - psql -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE flask_celery_helper_test TO user1;"
 
 test_script:
   - python setup.py test  # SQLAlchemy SQLite
@@ -42,7 +46,7 @@ test_script:
   #- cmd /C "set BROKER=beanstalk&& python setup.py test"
   #- cmd /C "set BROKER=iron&& python setup.py test"
   - cmd /C "set BROKER=mysql&& python setup.py test"
-  #- cmd /C "set BROKER=postgres&& python setup.py test"
+  - cmd /C "set BROKER=postgres&& python setup.py test"
 
 after_test: codecov
 

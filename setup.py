@@ -18,7 +18,7 @@ NAME = 'Flask-Celery-Helper'
 NAME_FILE = 'flask_celery'
 PACKAGE = False
 REQUIRES_INSTALL = ['Flask', 'celery']
-REQUIRES_TEST = ['pytest-cov', 'Flask-Redis-Helper', 'Flask-SQLAlchemy', 'PyMySQL']
+REQUIRES_TEST = ['pytest-cov', 'Flask-Redis-Helper', 'Flask-SQLAlchemy', 'PyMySQL', 'pg8000']
 REQUIRES_PIP = '"' + '" "'.join(set(REQUIRES_INSTALL + REQUIRES_TEST)) + '"'
 
 

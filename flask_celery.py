@@ -97,7 +97,7 @@ class _LockManagerDB(_LockManager):
         try:
             self.save_group(self.task_identifier, None)
         except Exception as e:
-            if 'IntegrityError' not in str(e):
+            if 'IntegrityError' not in str(e) and 'ProgrammingError' not in str(e):
                 raise
             difference = datetime.utcnow() - self.restore_group(self.task_identifier)['date_done']
             if difference < timedelta(seconds=self.timeout):
