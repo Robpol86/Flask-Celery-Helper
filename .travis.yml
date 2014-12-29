@@ -13,15 +13,16 @@ install:
   - pip install .
 
 script:
-  - python setup.py test && mv .coverage .coverage.1  # SQLAlchemy SQLite
-  - BROKER=redis python setup.py test && mv .coverage .coverage.2
-  - BROKER=redis_sock,/tmp/redis.sock python setup.py test && mv .coverage .coverage.3
-  #- BROKER=mongo python setup.py test && mv .coverage .coverage.4
-  #- BROKER=couch python setup.py test && mv .coverage .coverage.5
-  #- BROKER=beanstalk python setup.py test && mv .coverage .coverage.6
-  #- BROKER=iron python setup.py test && mv .coverage .coverage.7
-  - BROKER=mysql python setup.py test && mv .coverage .coverage.8
-  - BROKER=postgres python setup.py test && mv .coverage .coverage.8
+  - python setup.py test && mv .coverage .coverage.sqlite  # SQLAlchemy SQLite
+  - BROKER=mysql python setup.py test && mv .coverage .coverage.mysql
+  - BROKER=postgres python setup.py test && mv .coverage .coverage.postgres
+  - BROKER=redis python setup.py test && mv .coverage .coverage.redis
+  - BROKER=redis_sock,/tmp/redis.sock python setup.py test && mv .coverage .coverage.redis_sock
+  #- BROKER=mongo python setup.py test && mv .coverage .coverage.mongo
+  #- BROKER=couch python setup.py test && mv .coverage .coverage.couch
+  #- BROKER=beanstalk python setup.py test && mv .coverage .coverage.beanstalk
+  #- BROKER=iron python setup.py test && mv .coverage .coverage.iron
+  #- BROKER=rabbit python setup.py test && mv .coverage .coverage.rabbit
 
 after_success:
   - coverage combine
@@ -37,5 +38,6 @@ before_script:
 
 services:
   - redis-server
-  - mongodb
-  - couchdb
+  #- rabbitmq
+  #- mongodb
+  #- couchdb

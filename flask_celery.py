@@ -17,6 +17,7 @@ __version__ = '1.0.0'
 
 
 class OtherInstanceError(Exception):
+    """Raised when Celery task is already running, when lock exists and has not timed out."""
     pass
 
 
@@ -56,10 +57,14 @@ class _LockManagerRedis(_LockManager):
 
     CELERY_LOCK = '_celery.single_instance.{task_id}'
 
+    def __init__(self, celery_self, timeout, include_args, args, kwargs):
+        super(_LockManagerRedis, self).__init__(celery_self, timeout, include_args, args, kwargs)
+        self.lock = None
+
     def __enter__(self):
         redis_key = self.CELERY_LOCK.format(task_id=self.task_identifier)
         self.lock = self.celery_self.backend.client.lock(redis_key, timeout=self.timeout)
-        self.log.debug('Timeout {0}s | Redis key {1}'.format(self.timeout, redis_key))
+        self.log.debug('Timeout %ds | Redis key %s', self.timeout, redis_key)
         if not self.lock.acquire(blocking=False):
             self.log.debug('Another instance is running.')
             raise OtherInstanceError('Failed to acquire lock, {0} already running.'.format(self.task_identifier))
@@ -75,10 +80,12 @@ class _LockManagerRedis(_LockManager):
 
     @property
     def is_already_running(self):
+        """Returns True if lock exists and has not timed out."""
         redis_key = self.CELERY_LOCK.format(task_id=self.task_identifier)
         return self.celery_self.backend.client.exists(redis_key)
 
     def reset_lock(self):
+        """Removed the lock regardless of timeout."""
         redis_key = self.CELERY_LOCK.format(task_id=self.task_identifier)
         self.celery_self.backend.client.delete(redis_key)
 
@@ -93,11 +100,11 @@ class _LockManagerDB(_LockManager):
         self.delete_group = getattr(self.celery_self.backend, '_delete_group')
 
     def __enter__(self):
-        self.log.debug('Timeout {0}s'.format(self.timeout))
+        self.log.debug('Timeout %ds', self.timeout)
         try:
             self.save_group(self.task_identifier, None)
-        except Exception as e:
-            if 'IntegrityError' not in str(e) and 'ProgrammingError' not in str(e):
+        except Exception as exc:
+            if 'IntegrityError' not in str(exc) and 'ProgrammingError' not in str(exc):
                 raise
             difference = datetime.utcnow() - self.restore_group(self.task_identifier)['date_done']
             if difference < timedelta(seconds=self.timeout):
@@ -117,6 +124,7 @@ class _LockManagerDB(_LockManager):
 
     @property
     def is_already_running(self):
+        """Returns True if lock exists and has not timed out."""
         date_done = (self.restore_group(self.task_identifier) or dict()).get('date_done')
         if not date_done:
             return False
@@ -124,6 +132,7 @@ class _LockManagerDB(_LockManager):
         return difference < timedelta(seconds=self.timeout)
 
     def reset_lock(self):
+        """Removed the lock regardless of timeout."""
         self.delete_group(self.task_identifier)
 
 
@@ -203,11 +212,10 @@ class Celery(CeleryClass):
         app.extensions['celery'] = _CeleryState(self, app)
 
         # Instantiate celery and read config.
-        super(Celery, self).__init__(app.import_name,
-                                     broker=app.config['CELERY_BROKER_URL'])
+        super(Celery, self).__init__(app.import_name, broker=app.config['CELERY_BROKER_URL'])
 
+        # Set result backend default.
         if 'CELERY_RESULT_BACKEND' in app.config:
-            # Set result backend default.
             self._preconf['CELERY_RESULT_BACKEND'] = app.config['CELERY_RESULT_BACKEND']
 
         self.conf.update(app.config)
@@ -215,6 +223,7 @@ class Celery(CeleryClass):
 
         # Add Flask app context to celery instance.
         class ContextTask(task_base):
+            """Celery instance wrapped within the Flask app context."""
             def __call__(self, *_args, **_kwargs):
                 with app.app_context():
                     return task_base.__call__(self, *_args, **_kwargs)
@@ -252,6 +261,7 @@ def single_instance(func=None, lock_timeout=None, include_args=False):
 
     @wraps(func)
     def wrapped(celery_self, *args, **kwargs):
+        """Wrapped Celery task, for single_instance()."""
         # Select the manager and get timeout.
         timeout = (
             lock_timeout or celery_self.soft_time_limit or celery_self.time_limit
