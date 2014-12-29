@@ -170,6 +170,14 @@ Single Instance Example
 Changelog
 ---------
 
+1.1.0
+`````
+
+* Added Windows support.
+* ``CELERY_RESULT_BACKEND`` no longer mandatory.
+* ``single_instance`` supported on SQLite/MySQL/PostgreSQL in addition to Redis.
+* Breaking changes: ``flask.ext.celery.CELERY_LOCK`` moved to ``flask.ext.celery._LockManagerRedis.CELERY_LOCK``.
+
 1.0.0
 `````
 
@@ -183,12 +191,12 @@ Changelog
 0.2.1
 `````
 
-* Fixed single_instance arguments with functools.
+* Fixed ``single_instance`` arguments with functools.
 
 0.2.0
 `````
 
-* Added include_args argument to single_instance.
+* Added include_args argument to ``single_instance``.
 
 0.1.0
 `````

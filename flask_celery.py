@@ -13,7 +13,7 @@ from celery import _state, Celery as CeleryClass
 
 __author__ = '@Robpol86'
 __license__ = 'MIT'
-__version__ = '1.0.0'
+__version__ = '1.1.0'
 
 
 class OtherInstanceError(Exception):

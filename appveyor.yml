@@ -22,6 +22,10 @@ install:
   - ps: pip install $(python -c 'import setup; print(setup.REQUIRES_PIP)')
   - pip install robpol86-codecov
 
+services:
+  - mysql
+  - postgresql
+
 build_script:
   - ps: mv .git ..
   - pip install .
@@ -52,7 +56,3 @@ test_script:
 after_test:
   - coverage combine
   - codecov
-
-services:
-  - mysql
-  - postgresql
