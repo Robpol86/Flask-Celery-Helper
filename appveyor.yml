@@ -1,35 +1,35 @@
 environment:
   CODECOV_TOKEN:
     secure: SUr0uj2ygHCZaTNHy+OnVmmkR3ZJoE8wz5SaT9uK2xDSoVi4EvFg88v8JmCWtJ5r
-  PYTHONIOENCODING: utf-8
   PGPASSWORD: Password12!
-
   matrix:
-    - PYTHON: C:\Python27
-    - PYTHON: C:\Python27-x64
-    - PYTHON: C:\Python33
-    - PYTHON: C:\Python33-x64
-    - PYTHON: C:\Python34
-    - PYTHON: C:\Python34-x64
+    - BROKER: sqlite
+    - BROKER: mysql
+    - BROKER: postgres
+    - BROKER: redis
 
 init:
-  - IF DEFINED PYTHON set PATH=%PYTHON%;%PYTHON%\Scripts;%PATH%
+  - set PATH=C:\Python34-x64;C:\Python34-x64\Scripts;%PATH%
   - set PATH=%PATH%;C:\Program Files\MySQL\MySQL Server 5.6\bin;C:\Program Files\PostgreSQL\9.3\bin
 
 install:
   - ps: Start-FileDownload https://raw.github.com/pypa/pip/master/contrib/get-pip.py
   - python get-pip.py
-  - ps: pip install $(python -c 'import setup; print(setup.REQUIRES_PIP)')
-  - pip install robpol86-codecov
+
+build_script:
+  - pip install codecov "tox<2.0"
+
+test_script:
+  - tox
+  - tox -e combine py34x64 py34 py33x64 py33 py27x64 py27
+
+after_test:
+  - mv tests/.coverage .
+  - codecov || exit /B 0
 
 services:
   - mysql
   - postgresql
-
-build_script:
-  - ps: mv .git ..
-  - pip install .
-  - ps: mv ..\.git .
 
 after_build:
   - cinst redis-64
@@ -40,19 +40,3 @@ after_build:
   - psql -U postgres -c "CREATE DATABASE flask_celery_helper_test;"
   - psql -U postgres -c "CREATE USER user1 WITH PASSWORD 'pass';"
   - psql -U postgres -c "GRANT ALL PRIVILEGES ON DATABASE flask_celery_helper_test TO user1;"
-
-test_script:
-  - python setup.py test && ren .coverage .coverage.sqlite  # SQLAlchemy SQLite
-  - cmd /C "set BROKER=mysql&& python setup.py test && ren .coverage .coverage.mysql
-  - cmd /C "set BROKER=postgres&& python setup.py test && ren .coverage .coverage.postgres
-  - cmd /C "set BROKER=redis&& python setup.py test && ren .coverage .coverage.redis
-  #- cmd /C "set BROKER=redis_sock,/tmp/redis.sock&& python setup.py test && ren .coverage .coverage.redis_sock
-  #- cmd /C "set BROKER=mongo&& python setup.py test && ren .coverage .coverage.mongo
-  #- cmd /C "set BROKER=couch&& python setup.py test && ren .coverage .coverage.couch
-  #- cmd /C "set BROKER=beanstalk&& python setup.py test && ren .coverage .coverage.beanstalk
-  #- cmd /C "set BROKER=iron&& python setup.py test && ren .coverage .coverage.iron
-  #- cmd /C "set BROKER=rabbit&& python setup.py test && ren .coverage .coverage.rabbit
-
-after_test:
-  - coverage combine
-  - codecov
