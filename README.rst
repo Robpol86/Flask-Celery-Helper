@@ -8,7 +8,7 @@ I need an init_app() method to initialize Celery after I instantiate it.
 
 This extension also comes with a ``single_instance`` method.
 
-* Python 2.6, 2.7, PyPy, PyPy3, 3.3, and 3.4 supported on Linux and OS X.
+* Python 2.6, 2.7, PyPy, 3.3, and 3.4 supported on Linux and OS X.
 * Python 2.7, 3.3, and 3.4 supported on Windows (both 32 and 64 bit versions of Python).
 
 Tested on Windows XP and Windows 10 technical preview.
