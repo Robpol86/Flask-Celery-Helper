@@ -11,27 +11,21 @@ This extension also comes with a ``single_instance`` method.
 * Python 2.6, 2.7, PyPy, 3.3, and 3.4 supported on Linux and OS X.
 * Python 2.7, 3.3, and 3.4 supported on Windows (both 32 and 64 bit versions of Python).
 
-Tested on Windows XP and Windows 10 technical preview.
-
 .. image:: https://img.shields.io/appveyor/ci/Robpol86/Flask-Celery-Helper/master.svg?style=flat-square&label=AppVeyor%20CI
-   :target: https://ci.appveyor.com/project/Robpol86/Flask-Celery-Helper
-   :alt: Build Status Windows
+    :target: https://ci.appveyor.com/project/Robpol86/Flask-Celery-Helper
+    :alt: Build Status Windows
 
 .. image:: https://img.shields.io/travis/Robpol86/Flask-Celery-Helper/master.svg?style=flat-square&label=Travis%20CI
-   :target: https://travis-ci.org/Robpol86/Flask-Celery-Helper
-   :alt: Build Status
+    :target: https://travis-ci.org/Robpol86/Flask-Celery-Helper
+    :alt: Build Status
 
 .. image:: https://img.shields.io/codecov/c/github/Robpol86/Flask-Celery-Helper/master.svg?style=flat-square&label=Codecov
-   :target: https://codecov.io/github/Robpol86/Flask-Celery-Helper
-   :alt: Coverage Status
+    :target: https://codecov.io/gh/Robpol86/Flask-Celery-Helper
+    :alt: Coverage Status
 
 .. image:: https://img.shields.io/pypi/v/Flask-Celery-Helper.svg?style=flat-square&label=Latest
-   :target: https://pypi.python.org/pypi/Flask-Celery-Helper/
-   :alt: Latest Version
-
-.. image:: https://img.shields.io/pypi/dm/Flask-Celery-Helper.svg?style=flat-square&label=PyPI%20Downloads
-   :target: https://pypi.python.org/pypi/Flask-Celery-Helper/
-   :alt: Downloads
+    :target: https://pypi.python.org/pypi/Flask-Celery-Helper
+    :alt: Latest Version
 
 Attribution
 ===========
@@ -164,6 +158,8 @@ Single Instance Example
         else:
             print(results2)  # Should not happen.
 
+.. changelog-section-start
+
 Changelog
 =========
 
@@ -208,3 +204,5 @@ Added
 ------------------
 
 * Initial release.
+
+.. changelog-section-end
