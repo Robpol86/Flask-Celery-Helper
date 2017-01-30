@@ -4,9 +4,9 @@ https://github.com/Robpol86/Flask-Celery-Helper
 https://pypi.python.org/pypi/Flask-Celery-Helper
 """
 
+import hashlib
 from datetime import datetime, timedelta
 from functools import partial, wraps
-import hashlib
 from logging import getLogger
 
 from celery import _state, Celery as CeleryClass
@@ -18,6 +18,7 @@ __version__ = '1.1.0'
 
 class OtherInstanceError(Exception):
     """Raised when Celery task is already running, when lock exists and has not timed out."""
+
     pass
 
 
@@ -27,13 +28,12 @@ class _LockManager(object):
     def __init__(self, celery_self, timeout, include_args, args, kwargs):
         """May raise NotImplementedError if the Celery backend is not supported.
 
-        Positional arguments:
-        celery_self -- from wrapped() within single_instance(). It is the `self` object specified in a binded Celery
-            task definition (implicit first argument of the Celery task when @celery.task(bind=True) is used).
-        timeout -- lock's timeout value in seconds.
-        include_args -- if single instance should take arguments into account (boolean).
-        args -- the task instance's args.
-        kwargs -- the task instance's kwargs.
+        :param celery_self: From wrapped() within single_instance(). It is the `self` object specified in a binded
+            Celery task definition (implicit first argument of the Celery task when @celery.task(bind=True) is used).
+        :param int timeout: Lock's timeout value in seconds.
+        :param bool include_args: If single instance should take arguments into account.
+        :param iter args: The task instance's args.
+        :param dict kwargs: The task instance's kwargs.
         """
         self.celery_self = celery_self
         self.timeout = timeout
@@ -44,7 +44,7 @@ class _LockManager(object):
 
     @property
     def task_identifier(self):
-        """Returns the unique identifier (string) of a task instance."""
+        """Return the unique identifier (string) of a task instance."""
         task_id = self.celery_self.name
         if self.include_args:
             merged_args = str(self.args) + str([(k, self.kwargs[k]) for k in sorted(self.kwargs)])
@@ -53,7 +53,7 @@ class _LockManager(object):
 
 
 class _LockManagerRedis(_LockManager):
-    """Handles locking/unlocking for Redis backends."""
+    """Handle locking/unlocking for Redis backends."""
 
     CELERY_LOCK = '_celery.single_instance.{task_id}'
 
@@ -80,7 +80,7 @@ class _LockManagerRedis(_LockManager):
 
     @property
     def is_already_running(self):
-        """Returns True if lock exists and has not timed out."""
+        """Return True if lock exists and has not timed out."""
         redis_key = self.CELERY_LOCK.format(task_id=self.task_identifier)
         return self.celery_self.backend.client.exists(redis_key)
 
@@ -91,7 +91,7 @@ class _LockManagerRedis(_LockManager):
 
 
 class _LockManagerDB(_LockManager):
-    """Handles locking/unlocking for SQLite/MySQL/PostgreSQL/etc backends."""
+    """Handle locking/unlocking for SQLite/MySQL/PostgreSQL/etc backends."""
 
     def __init__(self, celery_self, timeout, include_args, args, kwargs):
         super(_LockManagerDB, self).__init__(celery_self, timeout, include_args, args, kwargs)
@@ -103,7 +103,7 @@ class _LockManagerDB(_LockManager):
         self.log.debug('Timeout %ds', self.timeout)
         try:
             self.save_group(self.task_identifier, None)
-        except Exception as exc:
+        except Exception as exc:  # pylint: disable=broad-except
             if 'IntegrityError' not in str(exc) and 'ProgrammingError' not in str(exc):
                 raise
             difference = datetime.utcnow() - self.restore_group(self.task_identifier)['date_done']
@@ -124,7 +124,7 @@ class _LockManagerDB(_LockManager):
 
     @property
     def is_already_running(self):
-        """Returns True if lock exists and has not timed out."""
+        """Return True if lock exists and has not timed out."""
         date_done = (self.restore_group(self.task_identifier) or dict()).get('date_done')
         if not date_done:
             return False
@@ -137,17 +137,14 @@ class _LockManagerDB(_LockManager):
 
 
 def _select_manager(backend_name):
-    """Selects the proper LockManager based on the current backend used by Celery.
+    """Select the proper LockManager based on the current backend used by Celery.
 
-    Raises:
-    NotImplementedError if Celery is using an unsupported backend.
+    :raise NotImplementedError: If Celery is using an unsupported backend.
 
-    Positional arguments:
-    backend -- Class name of the current Celery backend. Usually value of:
+    :param str backend_name: Class name of the current Celery backend. Usually value of
         current_app.extensions['celery'].celery.backend.__class__.__name__.
 
-    Returns:
-    Class definition object (not instance). One of the _LockManager* classes.
+    :return: Class definition object (not instance). One of the _LockManager* classes.
     """
     if backend_name == 'RedisBackend':
         lock_manager = _LockManagerRedis
@@ -159,7 +156,7 @@ def _select_manager(backend_name):
 
 
 class _CeleryState(object):
-    """Remembers the configuration for the (celery, app) tuple. Modeled from SQLAlchemy."""
+    """Remember the configuration for the (celery, app) tuple. Modeled from SQLAlchemy."""
 
     def __init__(self, celery, app):
         self.celery = celery
@@ -189,8 +186,7 @@ class Celery(CeleryClass):
 
         If no app argument provided you should do initialization later with init_app method.
 
-        Keyword arguments:
-        app -- Flask application instance.
+        :param app: Flask application instance.
         """
         self.original_register_app = _state._register_app  # Backup Celery app registration function.
         _state._register_app = lambda _: None  # Upon Celery app registration attempt, do nothing.
@@ -201,8 +197,7 @@ class Celery(CeleryClass):
     def init_app(self, app):
         """Actual method to read celery settings from app configuration and initialize the celery instance.
 
-        Positional arguments:
-        app -- Flask application instance.
+        :param app: Flask application instance.
         """
         _state._register_app = self.original_register_app  # Restore Celery app registration function.
         if not hasattr(app, 'extensions'):
@@ -223,7 +218,6 @@ class Celery(CeleryClass):
 
         # Add Flask app context to celery instance.
         class ContextTask(task_base):
-            """Celery instance wrapped within the Flask app context."""
             def __call__(self, *_args, **_kwargs):
                 with app.app_context():
                     return task_base.__call__(self, *_args, **_kwargs)
@@ -242,19 +236,15 @@ def single_instance(func=None, lock_timeout=None, include_args=False):
 
     Written by @Robpol86.
 
-    Raises:
-    OtherInstanceError -- if another instance is already running.
+    :raise OtherInstanceError: If another instance is already running.
 
-    Positional arguments:
-    func -- the function to decorate, must be also decorated by @celery.task.
-
-    Keyword arguments:
-    lock_timeout -- lock timeout in seconds plus five more seconds, in-case the task crashes and fails to release the
-        lock. If not specified, the values of the task's soft/hard limits are used. If all else fails, timeout will be 5
-        minutes.
-    include_args -- include the md5 checksum of the arguments passed to the task in the Redis key. This allows the same
-        task to run with different arguments, only stopping a task from running if another instance of it is running
-        with the same arguments.
+    :param function func: The function to decorate, must be also decorated by @celery.task.
+    :param int lock_timeout: Lock timeout in seconds plus five more seconds, in-case the task crashes and fails to
+        release the lock. If not specified, the values of the task's soft/hard limits are used. If all else fails,
+        timeout will be 5 minutes.
+    :param bool include_args: Include the md5 checksum of the arguments passed to the task in the Redis key. This allows
+        the same task to run with different arguments, only stopping a task from running if another instance of it is
+        running with the same arguments.
     """
     if func is None:
         return partial(single_instance, lock_timeout=lock_timeout, include_args=include_args)

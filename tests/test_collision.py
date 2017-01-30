@@ -1,5 +1,7 @@
-from flask.ext.celery import OtherInstanceError, _select_manager
+"""Test single-instance collision."""
+
 import pytest
+from flask.ext.celery import _select_manager, OtherInstanceError
 
 from tests.instances import celery
 
@@ -8,12 +10,14 @@ PARAMS = [('tests.instances.add', 8), ('tests.instances.mul', 16), ('tests.insta
 
 @pytest.mark.parametrize('task_name,expected', PARAMS)
 def test_basic(task_name, expected):
+    """Test no collision."""
     task = celery.tasks[task_name]
     assert expected == task.apply_async(args=(4, 4)).get()
 
 
 @pytest.mark.parametrize('task_name,expected', PARAMS)
 def test_collision(task_name, expected):
+    """Test single-instance collision."""
     manager_class = _select_manager(celery.backend.__class__.__name__)
     manager_instance = list()
     task = celery.tasks[task_name]
@@ -46,6 +50,7 @@ def test_collision(task_name, expected):
 
 
 def test_include_args():
+    """Test single-instance collision with task arguments taken into account."""
     manager_class = _select_manager(celery.backend.__class__.__name__)
     manager_instance = list()
     task = celery.tasks['tests.instances.mul']

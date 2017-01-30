@@ -1,3 +1,5 @@
+"""Handle Flask and Celery application global-instances."""
+
 import os
 
 from flask import Flask
@@ -7,12 +9,12 @@ from flask.ext.sqlalchemy import SQLAlchemy
 
 
 def generate_config():
-    """Generates a Flask config dict with settings for a specific broker based on an environment variable.
+    """Generate a Flask config dict with settings for a specific broker based on an environment variable.
 
     To be merged into app.config.
 
-    Returns:
-    A dict to be fed into app.config.update().
+    :return: Flask config to be fed into app.config.update().
+    :rtype: dict
     """
     config = dict()
 
@@ -50,13 +52,11 @@ def generate_config():
 
 
 def generate_context(config):
-    """Creates the Flask app context and initializes any extensions such as Celery, Redis, SQLAlchemy, etc.
+    """Create the Flask app context and initializes any extensions such as Celery, Redis, SQLAlchemy, etc.
 
-    Positional arguments:
-    config -- partial Flask config dict from generate_config().
+    :param dict config: Partial Flask config dict from generate_config().
 
-    Returns:
-    The Flask app instance.
+    :return: The Flask app instance.
     """
     flask_app = Flask(__name__)
     flask_app.config.update(config)
@@ -75,10 +75,10 @@ def generate_context(config):
 
 
 def get_flask_celery_apps():
-    """Calls generate_context() and generate_config().
+    """Call generate_context() and generate_config().
 
-    Returns:
-    Tuple, first item is the Flask app instance, second is the Celery app instance.
+    :return: First item is the Flask app instance, second is the Celery app instance.
+    :rtype: tuple
     """
     config = generate_config()
     flask_app = generate_context(config=config)
@@ -92,28 +92,33 @@ app, celery = get_flask_celery_apps()
 @celery.task(bind=True)
 @single_instance
 def add(x, y):
+    """Celery task: add numbers."""
     return x + y
 
 
 @celery.task(bind=True)
 @single_instance(include_args=True, lock_timeout=20)
 def mul(x, y):
+    """Celery task: multiply numbers."""
     return x * y
 
 
 @celery.task(bind=True)
 @single_instance()
 def sub(x, y):
+    """Celery task: subtract numbers."""
     return x - y
 
 
 @celery.task(bind=True, time_limit=70)
 @single_instance
 def add2(x, y):
+    """Celery task: add numbers."""
     return x + y
 
 
 @celery.task(bind=True, soft_time_limit=80)
 @single_instance
 def add3(x, y):
+    """Celery task: add numbers."""
     return x + y

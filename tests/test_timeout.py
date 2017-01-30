@@ -1,7 +1,9 @@
+"""Test single-instance lock timeout."""
+
 import time
 
-from flask.ext.celery import OtherInstanceError, _select_manager
 import pytest
+from flask.ext.celery import _select_manager, OtherInstanceError
 
 from tests.instances import celery
 
@@ -11,6 +13,7 @@ from tests.instances import celery
     ('tests.instances.add3', 80)
 ])
 def test_instances(task_name, timeout):
+    """Test task instances."""
     manager_class = _select_manager(celery.backend.__class__.__name__)
     manager_instance = list()
     task = celery.tasks[task_name]
@@ -27,6 +30,7 @@ def test_instances(task_name, timeout):
 
 @pytest.mark.parametrize('key,value', [('CELERYD_TASK_TIME_LIMIT', 200), ('CELERYD_TASK_SOFT_TIME_LIMIT', 100)])
 def test_settings(key, value):
+    """Test different Celery time limit settings."""
     celery.conf.update({key: value})
     manager_class = _select_manager(celery.backend.__class__.__name__)
     manager_instance = list()
@@ -51,6 +55,7 @@ def test_settings(key, value):
 
 
 def test_expired():
+    """Test timeout expired task instances."""
     celery.conf.update({'CELERYD_TASK_TIME_LIMIT': 5})
     manager_class = _select_manager(celery.backend.__class__.__name__)
     manager_instance = list()

@@ -1,10 +1,10 @@
-"""pytest configuration for all tests in all directories."""
+"""Configure tests."""
 
 import threading
 import time
 
-from celery.signals import worker_ready
 import pytest
+from celery.signals import worker_ready
 
 from tests.instances import app, celery
 
@@ -12,7 +12,10 @@ WORKER_READY = list()
 
 
 class Worker(threading.Thread):
+    """Run the Celery worker in a background thread."""
+
     def run(self):
+        """Run the thread."""
         celery_args = ['-C', '-q', '-c', '1', '-P', 'solo', '--without-gossip']
         with app.app_context():
             celery.worker_main(celery_args)
@@ -29,7 +32,7 @@ def on_worker_ready(**_):
 
 @pytest.fixture(autouse=True, scope='session')
 def celery_worker():
-    """Starts the Celery worker in a background thread."""
+    """Start the Celery worker in a background thread."""
     thread = Worker()
     thread.daemon = True
     thread.start()
