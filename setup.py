@@ -5,73 +5,104 @@ import codecs
 import os
 import re
 
-import setuptools
+from setuptools import Command, setup
 
-_PACKAGES = lambda: [os.path.join(r, s) for r, d, _ in os.walk(NAME_FILE) for s in d if s != '__pycache__']
-_VERSION_RE = re.compile(r"^__(version|author|license)__ = '([\w\.@]+)'$", re.MULTILINE)
-
-CLASSIFIERS = (
-    'Development Status :: 5 - Production/Stable',
-    'Environment :: Web Environment',
-    'Environment :: MacOS X',
-    'Environment :: Win32 (MS Windows)',
-    'Framework :: Flask',
-    'Intended Audience :: Developers',
-    'License :: OSI Approved :: MIT License',
-    'Operating System :: MacOS :: MacOS X',
-    'Operating System :: Microsoft :: Windows',
-    'Operating System :: POSIX',
-    'Operating System :: POSIX :: Linux',
-    'Programming Language :: Python :: 2.6',
-    'Programming Language :: Python :: 2.7',
-    'Programming Language :: Python :: 3.3',
-    'Programming Language :: Python :: 3.4',
-    'Programming Language :: Python :: Implementation :: PyPy',
-    'Topic :: Software Development :: Libraries',
-)
-DESCRIPTION = 'Celery support for Flask without breaking PyCharm inspections.'
-HERE = os.path.abspath(os.path.dirname(__file__))
-KEYWORDS = 'flask celery redis'
+IMPORT = 'flask_celery'
+INSTALL_REQUIRES = ['flask', 'celery']
+LICENSE = 'MIT'
 NAME = 'Flask-Celery-Helper'
-NAME_FILE = 'flask_celery'
-PACKAGE = False
-REQUIRES_INSTALL = ['Flask', 'celery']
-REQUIRES_TEST = ['pytest-cov', 'Flask-Redis-Helper', 'Flask-SQLAlchemy', 'PyMySQL', 'pg8000']
-REQUIRES_ALL = REQUIRES_INSTALL + REQUIRES_TEST
-VERSION_FILE = os.path.join(NAME_FILE, '__init__.py') if PACKAGE else '{0}.py'.format(NAME_FILE)
+VERSION = '1.1.0'
 
 
-def _safe_read(path, length):
-    """Read file contents."""
-    if not os.path.exists(os.path.join(HERE, path)):
+def readme(path='README.rst'):
+    """Try to read README.rst or return empty string if failed.
+
+    :param str path: Path to README file.
+
+    :return: File contents.
+    :rtype: str
+    """
+    path = os.path.realpath(os.path.join(os.path.dirname(__file__), path))
+    handle = None
+    url_prefix = 'https://raw.githubusercontent.com/Robpol86/{name}/v{version}/'.format(name=NAME, version=VERSION)
+    try:
+        handle = codecs.open(path, encoding='utf-8')
+        return handle.read(131072).replace('.. image:: docs', '.. image:: {0}docs'.format(url_prefix))
+    except IOError:
         return ''
-    file_handle = codecs.open(os.path.join(HERE, path), encoding='utf-8')
-    contents = file_handle.read(length)
-    file_handle.close()
-    return contents
+    finally:
+        getattr(handle, 'close', lambda: None)()
 
 
-ALL_DATA = dict(
-    author_email='robpol86@gmail.com',
-    classifiers=CLASSIFIERS,
-    description=DESCRIPTION,
-    install_requires=REQUIRES_INSTALL,
-    keywords=KEYWORDS,
-    long_description=_safe_read('README.rst', 15000),
-    name=NAME,
-    requires=REQUIRES_INSTALL,
-    tests_require=REQUIRES_TEST,
-    url='https://github.com/Robpol86/{0}'.format(NAME),
-    zip_safe=False,
-)
+class CheckVersion(Command):
+    """Make sure version strings and other metadata match here, in module/package, tox, and other places."""
 
+    description = 'verify consistent version/etc strings in project'
+    user_options = []
 
-# noinspection PyTypeChecker
-ALL_DATA.update(dict(_VERSION_RE.findall(_safe_read(VERSION_FILE, 1500).replace('\r\n', '\n'))))
-ALL_DATA.update(dict(py_modules=[NAME_FILE]) if not PACKAGE else dict(packages=[NAME_FILE] + _PACKAGES()))
+    @classmethod
+    def initialize_options(cls):
+        """Required by distutils."""
+        pass
+
+    @classmethod
+    def finalize_options(cls):
+        """Required by distutils."""
+        pass
+
+    @classmethod
+    def run(cls):
+        """Check variables."""
+        project = __import__(IMPORT, fromlist=[''])
+        for expected, var in [('@Robpol86', '__author__'), (LICENSE, '__license__'), (VERSION, '__version__')]:
+            if getattr(project, var) != expected:
+                raise SystemExit('Mismatch: {0}'.format(var))
+        # Check changelog.
+        if not re.compile(r'^%s - \d{4}-\d{2}-\d{2}[\r\n]' % VERSION, re.MULTILINE).search(readme()):
+            raise SystemExit('Version not found in readme/changelog file.')
+        # Check tox.
+        if INSTALL_REQUIRES:
+            contents = readme('tox.ini')
+            section = re.compile(r'[\r\n]+install_requires =[\r\n]+(.+?)[\r\n]+\w', re.DOTALL).findall(contents)
+            if not section:
+                raise SystemExit('Missing install_requires section in tox.ini.')
+            in_tox = re.findall(r'    ([^=]+)==[\w\d.-]+', section[0])
+            if INSTALL_REQUIRES != in_tox:
+                raise SystemExit('Missing/unordered pinned dependencies in tox.ini.')
 
 
 if __name__ == '__main__':
-    if not all((ALL_DATA['author'], ALL_DATA['license'], ALL_DATA['version'])):
-        raise ValueError('Failed to obtain metadata from package/module.')
-    setuptools.setup(**ALL_DATA)
+    setup(
+        author='@Robpol86',
+        author_email='robpol86@gmail.com',
+        classifiers=[
+            'Development Status :: 5 - Production/Stable',
+            'Environment :: Web Environment',
+            'Environment :: MacOS X',
+            'Environment :: Win32 (MS Windows)',
+            'Framework :: Flask',
+            'Intended Audience :: Developers',
+            'License :: OSI Approved :: MIT License',
+            'Operating System :: MacOS :: MacOS X',
+            'Operating System :: Microsoft :: Windows',
+            'Operating System :: POSIX',
+            'Operating System :: POSIX :: Linux',
+            'Programming Language :: Python :: 2.6',
+            'Programming Language :: Python :: 2.7',
+            'Programming Language :: Python :: 3.3',
+            'Programming Language :: Python :: 3.4',
+            'Programming Language :: Python :: Implementation :: PyPy',
+            'Topic :: Software Development :: Libraries',
+        ],
+        cmdclass=dict(check_version=CheckVersion),
+        description='Celery support for Flask without breaking PyCharm inspections.',
+        install_requires=INSTALL_REQUIRES,
+        keywords='flask celery redis',
+        license=LICENSE,
+        long_description=readme(),
+        name=NAME,
+        py_modules=[IMPORT],
+        url='https://github.com/Robpol86/' + NAME,
+        version=VERSION,
+        zip_safe=False,
+    )

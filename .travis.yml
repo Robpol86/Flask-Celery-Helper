@@ -1,30 +1,51 @@
+# Configure.
 language: python
+python:
+  - 3.4
+  - 3.3
+  - pypy
+  - 2.7
+  - 2.6
+services: [redis-server]
+sudo: false
 
-install:
-  - pip install codecov "tox<2.0"
-
-script:
-  - tox
-  - tox -e combine py34 py33 pypy py27 py26
-
-after_success:
-  - mv tests/.coverage .
-  - codecov || true
-
+# Environment and matrix.
 env:
   - BROKER: sqlite
   - BROKER: mysql
   - BROKER: postgres
   - BROKER: redis
   - BROKER: redis_sock,/tmp/redis.sock
+matrix:
+  include:
+    - python: 3.4
+      services: []
+      env: TOX_ENV=lint
+      before_script: []
+      after_success: []
 
-services:
-  - redis-server
-
+# Run.
+install: pip install tox
 before_script:
-  - echo -e "daemonize yes\nunixsocket /tmp/redis.sock\nport 0" |redis-server -
-  - mysql -u root -e 'CREATE DATABASE flask_celery_helper_test;'
-  - mysql -u root -e 'GRANT ALL PRIVILEGES ON flask_celery_helper_test.* TO "user"@"localhost" IDENTIFIED BY "pass";'
-  - psql -U postgres -c 'CREATE DATABASE flask_celery_helper_test;'
-  - psql -U postgres -c "CREATE USER user1 WITH PASSWORD 'pass';"
-  - psql -U postgres -c 'GRANT ALL PRIVILEGES ON DATABASE flask_celery_helper_test TO user1;'
+  - if [[ $BROKER == redis_sock* ]]; then echo -e "daemonize yes\nunixsocket /tmp/redis.sock\nport 0" |redis-server -; fi
+  - if [ $BROKER == mysql ]; then mysql -u root -e 'CREATE DATABASE flask_celery_helper_test;'; fi
+  - if [ $BROKER == mysql ]; then mysql -u root -e 'GRANT ALL PRIVILEGES ON flask_celery_helper_test.* TO "user"@"localhost" IDENTIFIED BY "pass";'; fi
+  - if [ $BROKER == postgres ]; then psql -U postgres -c 'CREATE DATABASE flask_celery_helper_test;'; fi
+  - if [ $BROKER == postgres ]; then psql -U postgres -c "CREATE USER user1 WITH PASSWORD 'pass';"; fi
+  - if [ $BROKER == postgres ]; then psql -U postgres -c 'GRANT ALL PRIVILEGES ON DATABASE flask_celery_helper_test TO user1;'; fi
+script: tox -e ${TOX_ENV:-py}
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
+
+# Deploy.
+deploy:
+  provider: pypi
+  user: Robpol86
+  password:
+    secure:
+      "liwn5bHqjAtW+gRX6r4VgWuc44OUwfGSne4fTxb6G2pnPNW/IneVspQ2bFXeuQDdXzyLoOe\
+      bKa8bxjRurUEHedjV9UG9fVZwVsWU981aWOxeEl+6kLkpJ2fE9UVeK7T1O+RzzhkWhHq2/YL\
+      4BjBqzOLuBSAGnXZAnwH55Z6HY2g="
+  on:
+    condition: $TRAVIS_PYTHON_VERSION = 3.4
+    tags: true
