@@ -36,8 +36,8 @@ Single instance decorator inspired by
 Supported Libraries
 ===================
 
-* `Flask <http://flask.pocoo.org/>`_ 0.10.1
-* `Redis <http://redis.io/>`_ 2.9.1
+* `Flask <http://flask.pocoo.org/>`_ 0.12
+* `Redis <http://redis.io/>`_ 3.2.6
 * `Celery <http://www.celeryproject.org/>`_ 3.1.11
 
 Quickstart
@@ -59,7 +59,7 @@ Basic Example
 
     # example.py
     from flask import Flask
-    from flask.ext.celery import Celery
+    from flask_celery import Celery
 
     app = Flask('example')
     app.config['CELERY_BROKER_URL'] = 'redis://localhost'
@@ -87,7 +87,7 @@ Factory Example
 .. code:: python
 
     # extensions.py
-    from flask.ext.celery import Celery
+    from flask_celery import Celery
 
     celery = Celery()
 
@@ -130,8 +130,8 @@ Single Instance Example
     # example.py
     import time
     from flask import Flask
-    from flask.ext.celery import Celery, single_instance
-    from flask.ext.redis import Redis
+    from flask_celery import Celery, single_instance
+    from flask_redis import Redis
 
     app = Flask('example')
     app.config['REDIS_URL'] = 'redis://localhost'
@@ -164,6 +164,12 @@ Changelog
 =========
 
 This project adheres to `Semantic Versioning <http://semver.org/>`_.
+
+Unreleased
+----------
+
+Changed
+    * Supporting Flask 0.12, switching from ``flask.ext.celery`` to ``flask_celery`` import recommendation.
 
 1.1.0 - 2014-12-28
 ------------------
