@@ -1,7 +1,7 @@
 """Test single-instance collision."""
 
 import pytest
-from flask.ext.celery import _select_manager, OtherInstanceError
+from flask_celery import _select_manager, OtherInstanceError
 
 from tests.instances import celery
 

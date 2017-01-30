@@ -1,7 +1,7 @@
 """Test the Celery class."""
 
 import pytest
-from flask.ext.celery import Celery
+from flask_celery import Celery
 
 from tests.instances import app
 
