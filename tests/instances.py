@@ -3,9 +3,10 @@
 import os
 
 from flask import Flask
-from flask_celery import Celery, single_instance
 from flask_redis import Redis
 from flask_sqlalchemy import SQLAlchemy
+
+from flask_celery import Celery, single_instance
 
 
 def generate_config():

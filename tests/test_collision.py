@@ -1,8 +1,8 @@
 """Test single-instance collision."""
 
 import pytest
-from flask_celery import _select_manager, OtherInstanceError
 
+from flask_celery import _select_manager, OtherInstanceError
 from tests.instances import celery
 
 PARAMS = [('tests.instances.add', 8), ('tests.instances.mul', 16), ('tests.instances.sub', 0)]
